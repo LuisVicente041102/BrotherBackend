@@ -1,0 +1,39 @@
+# ⚡ General
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ⚡ Node.js
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# ⚡ Vite / React
+BrotherSublima/node_modules/
+BrotherSublima/.env
+BrotherSublima/dist/
+BrotherSublima/build/
+
+# ⚡ Express / Backend
+backend/node_modules/
+backend/.env
+backend/.cache/
+backend/dist/
+backend/build/
+backend/logs/
+
+# 🛠️ Configuración del editor
+.vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
