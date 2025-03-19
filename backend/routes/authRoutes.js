@@ -29,7 +29,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "7d" } // 🔥 Aumenta la duración del token
     );
 
     res.json({
@@ -37,6 +37,7 @@ router.post("/login", async (req, res) => {
       user: { id: user.id, email: user.email, role: user.role },
     });
   } catch (error) {
+    console.error("❌ Error en el servidor:", error);
     res.status(500).json({ message: "Error en el servidor" });
   }
 });

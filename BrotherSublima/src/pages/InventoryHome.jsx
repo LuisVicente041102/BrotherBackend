@@ -60,11 +60,15 @@ const InventoryHome = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
-        <h2 className="text-2xl font-semibold text-gray-800">
-          Bienvenido al Inventario
-        </h2>
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{
+        backgroundImage:
+          "url(https://images.unsplash.com/photo-1549923746-c502d488b3ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDZ8fGJsdWUlMjBtaW5pbWFsaXNtfGVufDB8fHx8MTY4MDAzNTQ3Mw&ixlib=rb-1.2.1&q=80&w=1920)",
+      }}
+    >
+      <div className="bg-white bg-opacity-90 p-10 rounded-lg shadow-xl w-full max-w-lg text-center backdrop-blur-md">
+        <h2 className="text-3xl font-bold text-gray-800">Inventario</h2>
         {user && (
           <>
             <p className="text-gray-600 mt-2">Hola, {user.email}</p>
@@ -72,27 +76,27 @@ const InventoryHome = () => {
             {user.role === "admin" && (
               <>
                 <button
-                  className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-300"
                   onClick={() => navigate("/add-employee")}
                 >
-                  Agregar Empleado
+                  + Agregar Empleado
                 </button>
 
-                <h3 className="text-xl font-semibold mt-4">
+                <h3 className="text-xl font-semibold mt-6 text-gray-700">
                   Lista de Empleados
                 </h3>
                 {error && <p className="text-red-500">{error}</p>}
 
-                <ul className="mt-3 text-left">
+                <ul className="mt-3 text-left space-y-3">
                   {employees.length > 0 ? (
                     employees.map((emp) => (
                       <li
                         key={emp.id}
-                        className="p-2 border-b border-gray-300 flex justify-between items-center"
+                        className="flex justify-between items-center p-3 bg-gray-100 rounded-lg shadow-sm"
                       >
-                        {emp.email}
+                        <span className="text-gray-800">{emp.email}</span>
                         <button
-                          className="bg-red-600 text-white px-2 py-1 rounded text-sm"
+                          className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700 transition duration-200"
                           onClick={() => handleDeleteEmployee(emp.id)}
                         >
                           Eliminar
@@ -100,18 +104,13 @@ const InventoryHome = () => {
                       </li>
                     ))
                   ) : (
-                    <p>No hay empleados registrados</p>
+                    <p className="text-gray-500 text-sm">
+                      No hay empleados registrados
+                    </p>
                   )}
                 </ul>
               </>
             )}
-
-            <button
-              className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-              onClick={handleLogout}
-            >
-              Cerrar Sesión
-            </button>
           </>
         )}
       </div>
