@@ -22,7 +22,7 @@ const createTables = async () => {
     await client.query("DROP TABLE IF EXISTS test_table;");
     console.log("🗑️ Tabla 'test_table' eliminada");
 
-    // Crear tabla de usuarios para el inventario
+    // Crear tabla de usuarios
     await client.query(`
       CREATE TABLE IF NOT EXISTS inventory_users (
         id SERIAL PRIMARY KEY,
@@ -32,15 +32,46 @@ const createTables = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-
     console.log("✅ Tabla 'inventory_users' creada correctamente");
+
+    // Crear tabla de categorías
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      ALTER TABLE categories ADD COLUMN archivado BOOLEAN DEFAULT FALSE;
+
+    `);
+    console.log("✅ Tabla 'categories' creada correctamente");
+
+    // Crear tabla de productos (con campo imagen_url)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio_compra NUMERIC(10, 2) NOT NULL,
+        precio_venta NUMERIC(10, 2) NOT NULL,
+        imagen_url TEXT, -- Guarda la ruta/URL de la imagen
+        categoria_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP
+      );
+
+      ALTER TABLE products ADD COLUMN archivado BOOLEAN DEFAULT FALSE;
+
+    `);
+    console.log("✅ Tabla 'products' creada correctamente");
 
     await client.end();
     console.log("🔌 Conexión cerrada correctamente");
   } catch (error) {
-    console.error("❌ Error creando la tabla:", error.message);
+    console.error("❌ Error creando las tablas:", error.message);
     await client.end();
-    process.exit(1); // Salida con error
+    process.exit(1);
   }
 };
 

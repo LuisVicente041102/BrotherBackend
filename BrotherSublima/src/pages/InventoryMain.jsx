@@ -20,7 +20,7 @@ const InventoryMain = () => {
 
           {/* Botón para ir al Inventario */}
           <button
-            onClick={() => navigate("/inventory")}
+            onClick={() => navigate("/dashboard")}
             className="mt-6 px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             Ir al Inventario

@@ -5,6 +5,16 @@ import InventoryLogin from "./pages/InventoryLogin";
 import InventoryHome from "./pages/InventoryHome";
 import AddEmployee from "./pages/AddEmployee";
 import InventoryMain from "./pages/InventoryMain";
+import CategoryList from "./pages/CategoryList";
+import ArchivedCategories from "./pages/ArchivedCategories";
+import EditCategory from "./pages/EditCategory";
+import ArchivedProducts from "./pages/ArchivedProducts";
+import InventoryDashboard from "./pages/InventoryDashboard";
+import AddProduct from "./pages/AddProduct";
+import InventoryReports from "./pages/InventoryReports";
+import AddCategory from "./pages/AddCategory";
+import EditProduct from "./pages/EditProduct";
+import ViewProducts from "./pages/ViewProducts";
 import Navbar from "./components/Navbar"; // ✅ Importamos el Navbar
 import useAuth from "./hooks/useAuth"; // ✅ Importamos el hook de autenticación
 
@@ -44,6 +54,46 @@ function App() {
         <Route
           path="/main"
           element={<ProtectedRoute element={<InventoryMain />} />}
+        />
+        <Route
+          path="/dashboard"
+          element={<ProtectedRoute element={<InventoryDashboard />} />}
+        />
+        <Route
+          path="/categories"
+          element={<ProtectedRoute element={<CategoryList />} />}
+        />
+        <Route
+          path="/reports"
+          element={<ProtectedRoute element={<InventoryReports />} />}
+        />
+        <Route
+          path="/archive-products"
+          element={<ProtectedRoute element={<ArchivedProducts />} />}
+        />
+        <Route
+          path="/archive-category"
+          element={<ProtectedRoute element={<ArchivedCategories />} />}
+        />
+        <Route
+          path="/add-categorie"
+          element={<ProtectedRoute element={<AddCategory />} />}
+        />
+        <Route
+          path="/edit-categorie/:id"
+          element={<ProtectedRoute element={<EditCategory />} />}
+        />
+        <Route
+          path="/add-product"
+          element={<ProtectedRoute element={<AddProduct />} />}
+        />
+        <Route
+          path="/view-product"
+          element={<ProtectedRoute element={<ViewProducts />} />}
+        />
+        <Route
+          path="/edit-product/:id"
+          element={<ProtectedRoute element={<EditProduct />} />}
         />
       </Routes>
     </>

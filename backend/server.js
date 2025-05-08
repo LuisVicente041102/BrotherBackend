@@ -1,9 +1,12 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const pool = require("./db");
 const authRoutes = require("./routes/authRoutes"); // ✅ Rutas de autenticación
-const employeeRoutes = require("./routes/employeeRoutes"); // ✅ Rutas de empleados
+const employeeRoutes = require("./routes/employeeRoutes");
+const productRoutes = require("./routes/productRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,14 +15,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// 🖼️ Servir archivos estáticos de la carpeta uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Ruta de prueba para verificar que el servidor está funcionando
 app.get("/", (req, res) => {
   res.send("Servidor Express funcionando 🚀");
 });
 
-// ✅ Agregar rutas de autenticación y empleados
+// ✅ Agregar rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
 
 // Ruta de prueba para verificar conexión a PostgreSQL
 app.get("/test-db", async (req, res) => {
