@@ -1,14 +1,22 @@
 import React from "react";
+import Header from "../components/Header";
+import HeroSection from "../components/HeroSection";
+import CategoriesSection from "../components/CategoriesSection";
+import FeaturedProducts from "../components/FeaturedProducts";
+import WhyChooseUs from "../components/WhyChooseUs";
+import Footer from "../components/Footer";
 
-console.log("✅ Home.jsx se está ejecutando...");
-
-function Home() {
+export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold text-blue-600">Bienvenido a Brothers Sublima</h1>
-      <p className="text-lg text-gray-700 mt-4">Esta es la página de inicio.</p>
+    <div className="font-sans text-gray-800">
+      <Header />
+      <main>
+        <HeroSection />
+        <CategoriesSection />
+        <FeaturedProducts />
+        <WhyChooseUs />
+      </main>
+      <Footer />
     </div>
   );
 }
-
-export default Home;
