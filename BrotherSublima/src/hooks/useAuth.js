@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // Inicialmente `null`
+const usePosAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const user = localStorage.getItem("pos_user");
 
-    if (!token) {
+    if (!token || !user) {
       setIsAuthenticated(false);
-      navigate("/inventariologin");
+      navigate("/poslogin");
     } else {
       setIsAuthenticated(true);
     }
@@ -19,4 +20,4 @@ const useAuth = () => {
   return isAuthenticated;
 };
 
-export default useAuth;
+export default usePosAuth;

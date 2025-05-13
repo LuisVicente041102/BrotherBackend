@@ -22,7 +22,7 @@ const createTables = async () => {
     await client.query("DROP TABLE IF EXISTS test_table;");
     console.log("🗑️ Tabla 'test_table' eliminada");
 
-    // Crear tabla de usuarios
+    // Tabla de usuarios del inventario
     await client.query(`
       CREATE TABLE IF NOT EXISTS inventory_users (
         id SERIAL PRIMARY KEY,
@@ -34,20 +34,31 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'inventory_users' creada correctamente");
 
-    // Crear tabla de categorías
+    // 🔥 NUEVA: Tabla de usuarios del punto de venta
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pos_users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) NOT NULL,
+        email VARCHAR(150) UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role VARCHAR(20) DEFAULT 'cashier',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("✅ Tabla 'pos_users' creada correctamente");
+
+    // Tabla de categorías (con archivado ya incluido)
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id SERIAL PRIMARY KEY,
         nombre VARCHAR(100) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        archivado BOOLEAN DEFAULT FALSE
       );
-
-      ALTER TABLE categories ADD COLUMN archivado BOOLEAN DEFAULT FALSE;
-
     `);
     console.log("✅ Tabla 'categories' creada correctamente");
 
-    // Crear tabla de productos (con campo imagen_url)
+    // Tabla de productos (con archivado ya incluido)
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
@@ -55,14 +66,12 @@ const createTables = async () => {
         cantidad INTEGER NOT NULL,
         precio_compra NUMERIC(10, 2) NOT NULL,
         precio_venta NUMERIC(10, 2) NOT NULL,
-        imagen_url TEXT, -- Guarda la ruta/URL de la imagen
+        imagen_url TEXT,
         categoria_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP
+        updated_at TIMESTAMP,
+        archivado BOOLEAN DEFAULT FALSE
       );
-
-      ALTER TABLE products ADD COLUMN archivado BOOLEAN DEFAULT FALSE;
-
     `);
     console.log("✅ Tabla 'products' creada correctamente");
 
