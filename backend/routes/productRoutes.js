@@ -152,4 +152,39 @@ router.put("/:id/desarchivar", async (req, res) => {
   }
 });
 
+// Obtener productos públicos para el catálogo
+router.get("/public", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, nombre, precio_venta, imagen_url
+      FROM products
+      WHERE archivado = false
+      ORDER BY created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("❌ Error al obtener productos públicos:", error);
+    res.status(500).json({ message: "Error al obtener productos" });
+  }
+});
+
+// ✅ Obtener un producto individual por ID (para página de detalle)
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`SELECT * FROM products WHERE id = $1`, [
+      id,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("❌ Error al obtener producto por ID:", error);
+    res.status(500).json({ message: "Error interno" });
+  }
+});
+
 module.exports = router;

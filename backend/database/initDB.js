@@ -34,7 +34,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'inventory_users' creada correctamente");
 
-    // 🔥 NUEVA: Tabla de usuarios del punto de venta
+    // Tabla de usuarios del punto de venta
     await client.query(`
       CREATE TABLE IF NOT EXISTS pos_users (
         id SERIAL PRIMARY KEY,
@@ -47,7 +47,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'pos_users' creada correctamente");
 
-    // Tabla de categorías (con archivado ya incluido)
+    // Tabla de categorías
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id SERIAL PRIMARY KEY,
@@ -58,7 +58,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'categories' creada correctamente");
 
-    // Tabla de productos (con archivado ya incluido)
+    // Tabla de productos
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
@@ -75,6 +75,19 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'products' creada correctamente");
 
+    // 🔥 Tabla de items en carrito
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS cart_items (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES pos_users(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("✅ Tabla 'cart_items' creada correctamente");
+
+    // Cerrar conexión
     await client.end();
     console.log("🔌 Conexión cerrada correctamente");
   } catch (error) {

@@ -9,7 +9,7 @@ import CategoryList from "./pages/CategoryList";
 import ArchivedCategories from "./pages/ArchivedCategories";
 import EditCategory from "./pages/EditCategory";
 import POSLogin from "./pages/POSLogin";
-import POSRegister from "./pages/POSRegister"; // ✅ Importamos la nueva página
+import POSRegister from "./pages/POSRegister";
 import ArchivedProducts from "./pages/ArchivedProducts";
 import InventoryDashboard from "./pages/InventoryDashboard";
 import POSDashboard from "./pages/POSDashboard";
@@ -18,39 +18,76 @@ import InventoryReports from "./pages/InventoryReports";
 import AddCategory from "./pages/AddCategory";
 import EditProduct from "./pages/EditProduct";
 import ViewProducts from "./pages/ViewProducts";
+import Catalog from "./pages/Catalog";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import CheckoutDireccion from "./pages/CheckoutDireccion";
+import CheckoutPago from "./pages/CheckoutPago";
+import CheckoutResumen from "./pages/CheckoutResumen";
 import Navbar from "./components/Navbar";
 import useAuth from "./hooks/useAuth";
 
 console.log("✅ App.jsx se está ejecutando...");
 
-// 🔒 Componente de Rutas Protegidas
+// 🔒 Verifica si hay token + usuario
 const ProtectedRoute = ({ element }) => {
   const isAuthenticated = useAuth();
-
   if (isAuthenticated === null) {
     return <div className="text-center mt-20">Cargando...</div>;
   }
-
-  return isAuthenticated ? element : <Navigate to="/inventariologin" replace />;
+  return isAuthenticated ? element : <Navigate to="/poslogin" replace />;
 };
 
 function App() {
   const location = useLocation();
 
-  // Ocultar Navbar en login de inventario, punto de venta y registro POS
-  const hideNavbarRoutes = ["/inventariologin", "/poslogin", "/pos/register"];
+  const hideNavbarRoutes = [
+    "/inventariologin",
+    "/poslogin",
+    "/pos/register",
+    "/home",
+    "/catalogo",
+    "/carrito",
+    "/checkout/direccion",
+    "/checkout/pago",
+    "/checkout/resumen",
+    `/producto/${location.pathname.split("/")[2]}`,
+  ];
 
   return (
     <>
       {!hideNavbarRoutes.includes(location.pathname) && <Navbar />}
 
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Públicas */}
+        <Route path="/home" element={<Home />} />
+        <Route path="/catalogo" element={<Catalog />} />
+        <Route path="/producto/:id" element={<ProductDetail />} />
+
+        {/* Protegidas por sesión POS */}
+        <Route
+          path="/carrito"
+          element={<ProtectedRoute element={<Cart />} />}
+        />
+        <Route
+          path="/checkout/direccion"
+          element={<ProtectedRoute element={<CheckoutDireccion />} />}
+        />
+        <Route
+          path="/checkout/pago"
+          element={<ProtectedRoute element={<CheckoutPago />} />}
+        />
+        <Route
+          path="/checkout/resumen"
+          element={<ProtectedRoute element={<CheckoutResumen />} />}
+        />
+
+        {/* Login y registro */}
         <Route path="/inventariologin" element={<InventoryLogin />} />
         <Route path="/poslogin" element={<POSLogin />} />
-        <Route path="/pos/register" element={<POSRegister />} />{" "}
-        {/* ✅ Nueva ruta */}
-        {/* 🔒 Rutas protegidas */}
+        <Route path="/pos/register" element={<POSRegister />} />
+
+        {/* Protegidas - inventario */}
         <Route
           path="/inventory"
           element={<ProtectedRoute element={<InventoryHome />} />}
@@ -92,10 +129,6 @@ function App() {
           element={<ProtectedRoute element={<EditCategory />} />}
         />
         <Route
-          path="/pos/dashboard"
-          element={<ProtectedRoute element={<POSDashboard />} />}
-        />
-        <Route
           path="/add-product"
           element={<ProtectedRoute element={<AddProduct />} />}
         />
@@ -106,6 +139,10 @@ function App() {
         <Route
           path="/edit-product/:id"
           element={<ProtectedRoute element={<EditProduct />} />}
+        />
+        <Route
+          path="/pos/dashboard"
+          element={<ProtectedRoute element={<POSDashboard />} />}
         />
       </Routes>
     </>

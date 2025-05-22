@@ -28,7 +28,7 @@ const POSLogin = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("pos_user", JSON.stringify(data.user));
 
-      navigate("/pos/dashboard");
+      navigate("/home");
     } catch (err) {
       console.error("❌ Error en login:", err.message);
       setError(err.message);
