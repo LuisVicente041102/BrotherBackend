@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import CheckoutButton from "../components/CheckoutButton";
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
@@ -12,7 +13,7 @@ const Cart = () => {
     const token = localStorage.getItem("token");
 
     if (!user || !token) {
-      navigate("/poslogin"); // 🔒 Redirige si no hay sesión
+      navigate("/poslogin");
       return;
     }
 
@@ -112,12 +113,29 @@ const Cart = () => {
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
             </div>
-            <button
-              onClick={() => navigate("/checkout/direccion")}
-              className="mt-6 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-            >
-              Continuar compra
-            </button>
+
+            {cart.length > 0 && (
+              <div className="mt-6">
+                <CheckoutButton
+                  cartItems={cart}
+                  onBeforeCheckout={() => {
+                    const user = JSON.parse(localStorage.getItem("pos_user"));
+                    localStorage.setItem("cartItems", JSON.stringify(cart));
+                    localStorage.setItem(
+                      "direccion",
+                      JSON.stringify({
+                        line1: "Calle Ejemplo 123",
+                        city: "Colima",
+                        state: "Colima",
+                        postal_code: "28000",
+                        country: "MX",
+                      })
+                    );
+                    localStorage.setItem("email", user?.email || "");
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

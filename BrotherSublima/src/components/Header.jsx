@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LoginAlertModal from "./LoginAlertModal"; // 👈 Importa el modal
+import LoginAlertModal from "./LoginAlertModal";
 
 const Header = ({ isLoggedIn }) => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const Header = ({ isLoggedIn }) => {
     if (token && user) {
       navigate("/carrito");
     } else {
-      setShowModal(true); // 🔥 Muestra el modal
+      setShowModal(true);
     }
   };
 
@@ -28,7 +28,7 @@ const Header = ({ isLoggedIn }) => {
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <h1
           className="text-xl font-bold text-indigo-600 cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
         >
           BrotherSublima
         </h1>
@@ -56,12 +56,22 @@ const Header = ({ isLoggedIn }) => {
               </button>
             </>
           ) : (
-            <button
-              className="text-red-600 hover:underline"
-              onClick={handleLogout}
-            >
-              Cerrar sesión
-            </button>
+            <>
+              {/* ✅ Botón nuevo: Mis Compras */}
+              <button
+                className="text-indigo-600 hover:underline"
+                onClick={() => navigate("/mis-compras")}
+              >
+                Mis compras
+              </button>
+
+              <button
+                className="text-red-600 hover:underline"
+                onClick={handleLogout}
+              >
+                Cerrar sesión
+              </button>
+            </>
           )}
 
           <button
@@ -74,7 +84,6 @@ const Header = ({ isLoggedIn }) => {
         </div>
       </div>
 
-      {/* Modal de advertencia */}
       <LoginAlertModal show={showModal} onClose={() => setShowModal(false)} />
     </header>
   );

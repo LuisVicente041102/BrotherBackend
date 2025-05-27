@@ -17,7 +17,7 @@ const AddEmployee = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ Enviar el token para autenticación
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ email, password }),
       });
@@ -28,8 +28,8 @@ const AddEmployee = () => {
         throw new Error(data.message || "Error al agregar empleado");
       }
 
-      alert("Empleado agregado exitosamente!");
-      navigate("/inventory"); // ✅ Redirigir al admin de vuelta al inventario
+      alert("✅ Empleado agregado exitosamente!");
+      navigate("/main"); // 🔄 Redirigir al panel principal del inventario
     } catch (err) {
       setError(err.message);
     }

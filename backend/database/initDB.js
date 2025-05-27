@@ -1,7 +1,6 @@
 require("dotenv").config();
 const { Client } = require("pg");
 
-// Configuración de conexión a PostgreSQL desde .env
 const client = new Client({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -13,16 +12,14 @@ const client = new Client({
 const createTables = async () => {
   try {
     console.log("🛠️ Iniciando la creación de la base de datos...");
-
-    // Conectar a la base de datos
     await client.connect();
     console.log("✅ Conectado a la base de datos", process.env.DB_NAME);
 
-    // Eliminar tabla de prueba si existe
+    // Limpieza de prueba
     await client.query("DROP TABLE IF EXISTS test_table;");
     console.log("🗑️ Tabla 'test_table' eliminada");
 
-    // Tabla de usuarios del inventario
+    // Usuarios del inventario
     await client.query(`
       CREATE TABLE IF NOT EXISTS inventory_users (
         id SERIAL PRIMARY KEY,
@@ -34,7 +31,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'inventory_users' creada correctamente");
 
-    // Tabla de usuarios del punto de venta
+    // Usuarios del punto de venta
     await client.query(`
       CREATE TABLE IF NOT EXISTS pos_users (
         id SERIAL PRIMARY KEY,
@@ -47,7 +44,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'pos_users' creada correctamente");
 
-    // Tabla de categorías
+    // Categorías
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id SERIAL PRIMARY KEY,
@@ -58,7 +55,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'categories' creada correctamente");
 
-    // Tabla de productos
+    // Productos
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
@@ -75,7 +72,7 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'products' creada correctamente");
 
-    // 🔥 Tabla de items en carrito
+    // Carrito
     await client.query(`
       CREATE TABLE IF NOT EXISTS cart_items (
         id SERIAL PRIMARY KEY,
@@ -87,7 +84,25 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'cart_items' creada correctamente");
 
-    // Cerrar conexión
+    // Pedidos (Orders)
+    await client.query(`DROP TABLE IF EXISTS orders;`);
+    await client.query(`
+      CREATE TABLE orders (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES pos_users(id) ON DELETE CASCADE,
+        stripe_session_id TEXT UNIQUE NOT NULL,
+        productos JSONB NOT NULL,
+        total NUMERIC(10, 2) NOT NULL,
+        direccion_envio JSONB NOT NULL,
+        correo_cliente TEXT NOT NULL,
+        shipping_company TEXT,
+        tracking_number TEXT,
+        status VARCHAR(50) DEFAULT 'pendiente',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("✅ Tabla 'orders' creada correctamente");
+
     await client.end();
     console.log("🔌 Conexión cerrada correctamente");
   } catch (error) {
@@ -97,5 +112,4 @@ const createTables = async () => {
   }
 };
 
-// Ejecutar la creación de tablas
 createTables();

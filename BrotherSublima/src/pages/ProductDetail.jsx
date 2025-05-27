@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import CheckoutButton from "../components/CheckoutButton";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -107,21 +108,17 @@ const ProductDetail = () => {
                 Agregar al carrito 🛒
               </button>
 
-              <button
-                onClick={() => {
-                  const token = localStorage.getItem("token");
-                  const user = localStorage.getItem("pos_user");
-
-                  if (token && user) {
-                    navigate("/checkout/direccion");
-                  } else {
-                    alert("Debes iniciar sesión para continuar con la compra.");
-                  }
-                }}
-                className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 w-full sm:w-auto"
-              >
-                Comprar ahora ⚡
-              </button>
+              {/* ✅ Checkout directo con Stripe */}
+              <CheckoutButton
+                cartItems={[
+                  {
+                    nombre: product.nombre,
+                    imagen_url: product.imagen_url,
+                    precio_venta: product.precio_venta,
+                    cantidad: 1,
+                  },
+                ]}
+              />
 
               <button
                 onClick={() => navigate("/catalogo")}

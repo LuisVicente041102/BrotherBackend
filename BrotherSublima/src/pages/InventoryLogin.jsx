@@ -25,17 +25,15 @@ const InventoryLogin = () => {
         throw new Error(data.message || "Error al iniciar sesión");
       }
 
-      // Guardar token y usuario en localStorage
+      // ✅ Guardar token y usuario con tipo: "inventario"
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem(
+        "inventory_user",
+        JSON.stringify({ ...data.user, tipo: "inventario" })
+      );
 
       console.log("✅ Usuario autenticado, redirigiendo a /main...");
-
-      // Intentamos redirigir con navigate, si no funciona usamos window.location
       navigate("/main");
-      setTimeout(() => {
-        window.location.href = "/main"; // 🚀 Alternativa en caso de fallo
-      }, 500);
     } catch (err) {
       console.error("❌ Error en login:", err.message);
       setError(err.message);

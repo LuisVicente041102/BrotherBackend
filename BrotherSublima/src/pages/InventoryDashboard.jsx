@@ -56,6 +56,16 @@ const InventoryDashboard = () => {
         >
           📦 Categorías Archivados
         </button>
+
+        {/* ✅ Botón de ventas: mismo tamaño, en columna central */}
+        <div className="col-span-1 sm:col-span-2 lg:col-start-2 lg:col-span-1">
+          <button
+            onClick={() => navigate("/inventory/sales")}
+            className="bg-rose-600 hover:bg-rose-700 text-white py-4 px-6 rounded-lg shadow-md transition w-full"
+          >
+            💰 Ver Ventas Realizadas
+          </button>
+        </div>
       </div>
     </div>
   );

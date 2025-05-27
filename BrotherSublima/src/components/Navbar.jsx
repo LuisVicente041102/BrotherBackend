@@ -12,7 +12,7 @@ const Navbar = () => {
   }
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem("user"));
+    const userData = JSON.parse(localStorage.getItem("inventory_user"));
     if (userData) {
       setUser(userData);
     }
@@ -20,9 +20,12 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("inventory_user");
     navigate("/inventariologin");
   };
+
+  // Si el usuario aún no se ha cargado, no mostrar nada para evitar errores
+  if (user === null) return null;
 
   return (
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
@@ -41,9 +44,9 @@ const Navbar = () => {
 
         {/* Menú centrado */}
         <div className="flex items-center space-x-6">
-          {user?.role === "admin" && (
+          {user.role === "admin" && (
             <button
-              onClick={() => navigate("/inventory")}
+              onClick={() => navigate("/add-employee")}
               className="text-gray-900 hover:text-blue-700 dark:text-white"
             >
               Agregar Empleado

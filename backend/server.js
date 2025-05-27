@@ -9,7 +9,9 @@ const posAuthRoutes = require("./routes/posAuthRoutes"); // Punto de venta
 const employeeRoutes = require("./routes/employeeRoutes");
 const productRoutes = require("./routes/productRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-const cartRoutes = require("./routes/cartRoutes"); // 🛒 Carrito (nuevo)
+const cartRoutes = require("./routes/cartRoutes");
+const stripeRoutes = require("./routes/stripeRoutes"); // 🛒 Stripe pagos
+const orderRoutes = require("./routes/orderRoutes"); // 🧾 Mis compras
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,7 +34,9 @@ app.use("/api/pos", posAuthRoutes); // Punto de venta
 app.use("/api/employees", employeeRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/cart", cartRoutes); // 🛒 Carrito (nuevo)
+app.use("/api/cart", cartRoutes);
+app.use("/api/stripe", stripeRoutes); // ✅ Stripe: pagos y save-order
+app.use("/api/orders", orderRoutes); // 🧾 Vista de órdenes (mis compras)
 
 // Verificación de conexión a la base de datos
 app.get("/test-db", async (req, res) => {

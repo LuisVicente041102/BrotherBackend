@@ -25,8 +25,12 @@ const POSLogin = () => {
         throw new Error(data.message || "Error al iniciar sesión");
       }
 
+      // ✅ Guardamos token y usuario con tipo
       localStorage.setItem("token", data.token);
-      localStorage.setItem("pos_user", JSON.stringify(data.user));
+      localStorage.setItem(
+        "pos_user",
+        JSON.stringify({ ...data.user, tipo: "pos" })
+      );
 
       navigate("/home");
     } catch (err) {
