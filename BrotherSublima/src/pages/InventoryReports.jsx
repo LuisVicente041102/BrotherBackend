@@ -22,24 +22,29 @@ ChartJS.register(
 const InventoryReports = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem("token");
       try {
-        const resProducts = await fetch("http://localhost:5000/api/products", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const resCategories = await fetch(
-          "http://localhost:5000/api/categories",
-          {
+        const [resProducts, resCategories, resOrders] = await Promise.all([
+          fetch("http://localhost:5000/api/products", {
             headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+          }),
+          fetch("http://localhost:5000/api/categories", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:5000/api/orders/all", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
         const dataProducts = await resProducts.json();
         const dataCategories = await resCategories.json();
+        const dataOrders = await resOrders.json();
         setProducts(dataProducts);
         setCategories(dataCategories);
+        setOrders(dataOrders);
       } catch (err) {
         console.error("Error al cargar datos:", err.message);
       }
@@ -47,12 +52,12 @@ const InventoryReports = () => {
     fetchData();
   }, []);
 
-  // KPIs
+  // KPIs de inventario
   const totalProductos = products.length;
   const stockTotal = products.reduce((acc, p) => acc + p.cantidad, 0);
   const bajoStock = products.filter((p) => p.cantidad <= 10).length;
 
-  // Gráfico de barras por producto
+  // Stock por producto
   const barData = {
     labels: products.map((p) => p.nombre),
     datasets: [
@@ -64,7 +69,7 @@ const InventoryReports = () => {
     ],
   };
 
-  // Gráfico de pastel por categoría
+  // Categoría por pastel
   const categoryData = categories.map((cat) => {
     const productosEnCategoria = products.filter(
       (p) => p.categoria_id === cat.id
@@ -92,12 +97,66 @@ const InventoryReports = () => {
     ],
   };
 
-  // Tablas por stock
-  const productosBajoStock = products.filter((p) => p.cantidad <= 10);
-  const productosStockMedio = products.filter(
-    (p) => p.cantidad > 10 && p.cantidad <= 30
-  );
-  const productosStockAlto = products.filter((p) => p.cantidad > 30);
+  // Ventas y órdenes
+  const ventasPorDia = {};
+  const ventasPorCliente = {};
+  const ordenesPorCliente = {};
+  const productosVendidos = {};
+
+  orders.forEach((o) => {
+    const fecha = new Date(o.created_at).toISOString().split("T")[0];
+    ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + parseFloat(o.total);
+
+    const cliente = o.nombre_cliente || o.correo_cliente || "Desconocido";
+    ventasPorCliente[cliente] =
+      (ventasPorCliente[cliente] || 0) + parseFloat(o.total);
+    ordenesPorCliente[cliente] = (ordenesPorCliente[cliente] || 0) + 1;
+
+    (o.productos || []).forEach((item) => {
+      productosVendidos[item.nombre] =
+        (productosVendidos[item.nombre] || 0) + item.cantidad;
+    });
+  });
+
+  const productoMasVendido = Object.entries(productosVendidos).sort(
+    (a, b) => b[1] - a[1]
+  )[0];
+  const productoMenosVendido = Object.entries(productosVendidos).sort(
+    (a, b) => a[1] - b[1]
+  )[0];
+
+  const ventasClienteData = {
+    labels: Object.keys(ventasPorCliente),
+    datasets: [
+      {
+        label: "Ventas Totales ($)",
+        data: Object.values(ventasPorCliente),
+        backgroundColor: "rgba(16, 185, 129, 0.6)",
+      },
+    ],
+  };
+
+  const ordenesClienteData = {
+    labels: Object.keys(ordenesPorCliente),
+    datasets: [
+      {
+        label: "Órdenes Realizadas",
+        data: Object.values(ordenesPorCliente),
+        backgroundColor: "rgba(139, 92, 246, 0.6)",
+      },
+    ],
+  };
+
+  const ventasDiaData = {
+    labels: Object.keys(ventasPorDia),
+    datasets: [
+      {
+        label: "Ventas por Día ($)",
+        data: Object.values(ventasPorDia),
+        backgroundColor: "rgba(255, 99, 132, 0.6)",
+      },
+    ],
+  };
 
   const renderTabla = (titulo, productos) => (
     <div className="bg-white p-4 rounded shadow mb-6">
@@ -132,10 +191,16 @@ const InventoryReports = () => {
     </div>
   );
 
+  const productosBajoStock = products.filter((p) => p.cantidad <= 10);
+  const productosStockMedio = products.filter(
+    (p) => p.cantidad > 10 && p.cantidad <= 30
+  );
+  const productosStockAlto = products.filter((p) => p.cantidad > 30);
+
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-        Reportes de Inventario
+        Reportes de Inventario y Ventas
       </h1>
 
       {/* KPIs */}
@@ -151,6 +216,22 @@ const InventoryReports = () => {
         <div className="bg-white p-6 rounded shadow text-center">
           <h3 className="text-lg font-semibold">Productos con Bajo Stock</h3>
           <p className="text-3xl text-red-600 mt-2">{bajoStock}</p>
+        </div>
+      </div>
+
+      {/* Producto más y menos vendido */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div className="bg-white p-6 rounded shadow text-center">
+          <h3 className="text-sm font-semibold">Producto Más Vendido</h3>
+          <p className="text-blue-600 mt-2 font-bold">
+            {productoMasVendido?.[0]} ({productoMasVendido?.[1]})
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded shadow text-center">
+          <h3 className="text-sm font-semibold">Producto Menos Vendido</h3>
+          <p className="text-red-600 mt-2 font-bold">
+            {productoMenosVendido?.[0]} ({productoMenosVendido?.[1]})
+          </p>
         </div>
       </div>
 
@@ -170,7 +251,28 @@ const InventoryReports = () => {
         </div>
       </div>
 
-      {/* Tablas de productos por stock */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-xl font-bold mb-4 text-gray-700">
+            Ventas por Día
+          </h2>
+          <Bar data={ventasDiaData} />
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-xl font-bold mb-4 text-gray-700">
+            Ventas por Cliente
+          </h2>
+          <Bar data={ventasClienteData} />
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-xl font-bold mb-4 text-gray-700">
+            Órdenes por Cliente
+          </h2>
+          <Bar data={ordenesClienteData} />
+        </div>
+      </div>
+
+      {/* Tablas */}
       {renderTabla("Productos con Bajo Stock (0 - 10)", productosBajoStock)}
       {renderTabla("Productos con Stock Medio (11 - 30)", productosStockMedio)}
       {renderTabla("Productos con Stock Alto (más de 30)", productosStockAlto)}

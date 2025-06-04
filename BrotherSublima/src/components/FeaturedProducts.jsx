@@ -1,23 +1,68 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Slider from "react-slick";
+import { useNavigate } from "react-router-dom";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
-export default function FeaturedProducts() {
+export default function HeroSection() {
+  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/products");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error("Error al cargar productos:", err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 4000,
+  };
+
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6">
-        <h3 className="text-2xl font-bold mb-6">Destacados</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white shadow rounded p-4">
-              <div className="h-40 bg-gray-200 mb-3" />
-              <h4 className="font-semibold text-lg">Producto {i}</h4>
-              <p className="text-sm text-gray-600">Descripción breve del producto.</p>
-              <button className="mt-3 bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700">
-                Comprar
-              </button>
+    <section className="bg-indigo-100 py-10 text-center">
+      <h2 className="text-3xl font-bold mb-4">
+        ¡Crea tu mundo con sublimación personalizada!
+      </h2>
+      <p className="mb-6 text-lg">
+        Productos únicos y personalizados para cada ocasión
+      </p>
+      <div className="max-w-3xl mx-auto mb-8">
+        <Slider {...settings}>
+          {products.map((product) => (
+            <div key={product.id} className="px-4">
+              <img
+                src={`http://localhost:5000${product.imagen_url}`}
+                alt={product.nombre}
+                className="h-64 object-contain mx-auto rounded shadow"
+              />
+              <h3 className="text-xl font-semibold mt-2">{product.nombre}</h3>
+              <p className="text-indigo-700 font-bold">
+                ${parseFloat(product.precio_venta).toFixed(2)}
+              </p>
             </div>
           ))}
-        </div>
+        </Slider>
       </div>
+      <button
+        className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
+        onClick={() => navigate("/catalogo")}
+      >
+        Ver Catálogo
+      </button>
     </section>
   );
 }

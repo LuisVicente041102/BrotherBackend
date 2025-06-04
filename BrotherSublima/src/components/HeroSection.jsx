@@ -1,3 +1,5 @@
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import React from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Importamos useNavigate
 

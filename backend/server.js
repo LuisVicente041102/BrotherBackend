@@ -10,6 +10,7 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const productRoutes = require("./routes/productRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes = require("./routes/cartRoutes");
+const addressRoutes = require("./routes/addressRoutes");
 const stripeRoutes = require("./routes/stripeRoutes"); // 🛒 Stripe pagos
 const orderRoutes = require("./routes/orderRoutes"); // 🧾 Mis compras
 
@@ -35,6 +36,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/address", addressRoutes);
 app.use("/api/stripe", stripeRoutes); // ✅ Stripe: pagos y save-order
 app.use("/api/orders", orderRoutes); // 🧾 Vista de órdenes (mis compras)
 

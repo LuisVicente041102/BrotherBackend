@@ -5,6 +5,7 @@ import CheckoutButton from "../components/CheckoutButton";
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
+  const [address, setAddress] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
@@ -19,6 +20,7 @@ const Cart = () => {
 
     setIsLoggedIn(true);
     fetchCart(user.id);
+    fetchAddress(user.id);
   }, []);
 
   const fetchCart = async (userId) => {
@@ -28,6 +30,16 @@ const Cart = () => {
       setCart(data);
     } catch (err) {
       console.error("❌ Error al obtener el carrito:", err);
+    }
+  };
+
+  const fetchAddress = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/address/${userId}`);
+      const data = await res.json();
+      setAddress(data);
+    } catch (err) {
+      console.error("❌ Error al obtener dirección:", err);
     }
   };
 
@@ -98,8 +110,33 @@ const Cart = () => {
             )}
           </div>
 
-          <div className="bg-white p-6 rounded shadow">
-            <h3 className="text-xl font-semibold mb-4">Resumen de compra</h3>
+          <div className="bg-white p-6 rounded shadow space-y-6">
+            {address && (
+              <div className="bg-gray-50 p-4 rounded border text-sm">
+                <h4 className="font-semibold mb-2 text-indigo-700">
+                  Dirección de entrega
+                </h4>
+                <p>
+                  {address.calle} #{address.numero}, {address.colonia},{" "}
+                  {address.ciudad}, {address.estado}, CP {address.codigo_postal}
+                </p>
+                <p>📞 {address.telefono}</p>
+                <p className="mt-2 text-gray-600 text-xs">
+                  Asegúrate de que estos datos sean correctos.
+                  <br />
+                  Puedes editarlos en la sección{" "}
+                  <span
+                    onClick={() => navigate("/agregar-direccion")}
+                    className="text-indigo-600 underline cursor-pointer"
+                  >
+                    Dirección
+                  </span>
+                  .
+                </p>
+              </div>
+            )}
+
+            <h3 className="text-xl font-semibold">Resumen de compra</h3>
             <div className="flex justify-between mb-2">
               <span>Productos</span>
               <span>${total.toFixed(2)}</span>
@@ -116,24 +153,7 @@ const Cart = () => {
 
             {cart.length > 0 && (
               <div className="mt-6">
-                <CheckoutButton
-                  cartItems={cart}
-                  onBeforeCheckout={() => {
-                    const user = JSON.parse(localStorage.getItem("pos_user"));
-                    localStorage.setItem("cartItems", JSON.stringify(cart));
-                    localStorage.setItem(
-                      "direccion",
-                      JSON.stringify({
-                        line1: "Calle Ejemplo 123",
-                        city: "Colima",
-                        state: "Colima",
-                        postal_code: "28000",
-                        country: "MX",
-                      })
-                    );
-                    localStorage.setItem("email", user?.email || "");
-                  }}
-                />
+                <CheckoutButton cartItems={cart} />
               </div>
             )}
           </div>

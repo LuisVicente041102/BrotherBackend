@@ -24,11 +24,8 @@ const POSRegister = () => {
         throw new Error(data.message || "Error al registrar");
       }
 
-      // Guardamos los datos y redirigimos
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("pos_user", JSON.stringify(data.user));
-
-      navigate("/home");
+      alert("Registro exitoso. Verifica tu correo antes de iniciar sesión.");
+      navigate("/poslogin");
     } catch (err) {
       console.error("❌ Error al registrar:", err.message);
       setError(err.message);

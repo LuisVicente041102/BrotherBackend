@@ -168,6 +168,17 @@ router.get("/public", async (req, res) => {
   }
 });
 
+router.get("/top", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM products ORDER BY cantidad DESC LIMIT 6
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error al obtener productos más vendidos:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
 // ✅ Obtener un producto individual por ID (para página de detalle)
 router.get("/:id", async (req, res) => {
   const { id } = req.params;

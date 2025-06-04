@@ -1,3 +1,4 @@
+// ✅ App.jsx actualizado con rutas de recuperación de contraseña y verificación
 import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
@@ -27,15 +28,16 @@ import CheckoutPago from "./pages/CheckoutPago";
 import CheckoutResumen from "./pages/CheckoutResumen";
 import Navbar from "./components/Navbar";
 import Success from "./pages/Success";
-import MisCompras from "./pages/MisCompras"; // ✅ NUEVO
+import MisCompras from "./pages/MisCompras";
+import GestionarPedidos from "./pages/OrderManagement";
+import AddAddress from "./pages/AddAddress";
+import VerificarCuenta from "./pages/VerificarCuenta";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
-// Nuevos hooks de autenticación
 import usePOSAuth from "./hooks/usePOSAuth";
 import useInventoryAuth from "./hooks/useInventoryAuth";
 
-console.log("✅ App.jsx se está ejecutando...");
-
-// 🔒 Ruta protegida para POS
 const POSProtectedRoute = ({ element }) => {
   const isPOSAuthenticated = usePOSAuth();
   if (isPOSAuthenticated === null)
@@ -43,7 +45,6 @@ const POSProtectedRoute = ({ element }) => {
   return isPOSAuthenticated ? element : <Navigate to="/poslogin" replace />;
 };
 
-// 🔒 Ruta protegida para inventario
 const InventoryProtectedRoute = ({ element }) => {
   const isInventoryAuthenticated = useInventoryAuth();
   if (isInventoryAuthenticated === null)
@@ -70,7 +71,11 @@ function App() {
     "/checkout/resumen",
     `/producto/${location.pathname.split("/")[2]}`,
     "/success",
-    "/mis-compras", // ✅ OCULTAR NAVBAR EN ESTA RUTA
+    "/mis-compras",
+    "/agregar-direccion",
+    "/verificar",
+    "/pos/forgot-password",
+    "/reset-password",
   ];
 
   return (
@@ -82,20 +87,19 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/catalogo" element={<Catalog />} />
         <Route path="/producto/:id" element={<ProductDetail />} />
+        <Route path="/verificar" element={<VerificarCuenta />} />
+        <Route path="/pos/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protegida - mensaje de compra exitosa (solo POS) */}
+        {/* POS protegidas */}
         <Route
           path="/success"
           element={<POSProtectedRoute element={<Success />} />}
         />
-
-        {/* ✅ NUEVA - vista de compras del cliente */}
         <Route
           path="/mis-compras"
           element={<POSProtectedRoute element={<MisCompras />} />}
         />
-
-        {/* Protegidas - punto de venta */}
         <Route
           path="/carrito"
           element={<POSProtectedRoute element={<Cart />} />}
@@ -116,8 +120,12 @@ function App() {
           path="/pos/dashboard"
           element={<POSProtectedRoute element={<POSDashboard />} />}
         />
+        <Route
+          path="/agregar-direccion"
+          element={<POSProtectedRoute element={<AddAddress />} />}
+        />
 
-        {/* Protegidas - inventario */}
+        {/* Inventario protegidas */}
         <Route
           path="/inventory"
           element={<InventoryProtectedRoute element={<InventoryHome />} />}
@@ -169,6 +177,10 @@ function App() {
         <Route
           path="/inventory/sales"
           element={<InventoryProtectedRoute element={<InventorySales />} />}
+        />
+        <Route
+          path="/gestionar-pedidos"
+          element={<InventoryProtectedRoute element={<GestionarPedidos />} />}
         />
         <Route
           path="/edit-product/:id"

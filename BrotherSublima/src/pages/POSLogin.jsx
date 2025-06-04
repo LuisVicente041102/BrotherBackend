@@ -5,11 +5,11 @@ const POSLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [showResend, setShowResend] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("🔄 Iniciando sesión punto de venta...");
 
     try {
       const response = await fetch("http://localhost:5000/api/pos/login", {
@@ -19,13 +19,13 @@ const POSLogin = () => {
       });
 
       const data = await response.json();
-      console.log("🔹 Respuesta del servidor:", data);
-
       if (!response.ok) {
+        if (data.code === "EMAIL_NOT_VERIFIED") {
+          setShowResend(true);
+        }
         throw new Error(data.message || "Error al iniciar sesión");
       }
 
-      // ✅ Guardamos token y usuario con tipo
       localStorage.setItem("token", data.token);
       localStorage.setItem(
         "pos_user",
@@ -34,8 +34,25 @@ const POSLogin = () => {
 
       navigate("/home");
     } catch (err) {
-      console.error("❌ Error en login:", err.message);
       setError(err.message);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/pos/resend-verification",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      alert("Correo de verificación reenviado.");
+    } catch (error) {
+      alert("Error al reenviar correo: " + error.message);
     }
   };
 
@@ -77,27 +94,38 @@ const POSLogin = () => {
               {error && (
                 <p className="text-red-500 text-sm text-center">{error}</p>
               )}
+              {showResend && (
+                <div className="text-center mt-2">
+                  <button
+                    onClick={handleResend}
+                    className="text-sm text-blue-500 hover:underline"
+                  >
+                    Reenviar correo de verificación
+                  </button>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit}>
-                <div>
+                {/* Email */}
+                <div className="mt-4">
                   <label
                     htmlFor="email"
-                    className="block mb-2 text-sm text-gray-600 dark:text-gray-200"
+                    className="block text-sm text-gray-600 dark:text-gray-200"
                   >
                     Correo Electrónico
                   </label>
                   <input
                     type="email"
                     id="email"
-                    placeholder="correo@ejemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+                    className="block w-full px-4 py-2 mt-2 border rounded-md dark:bg-gray-900"
                     required
                   />
                 </div>
 
-                <div className="mt-6">
+                {/* Password */}
+                <div className="mt-4">
                   <label
                     htmlFor="password"
                     className="text-sm text-gray-600 dark:text-gray-200"
@@ -107,10 +135,9 @@ const POSLogin = () => {
                   <input
                     type="password"
                     id="password"
-                    placeholder="Tu contraseña"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+                    className="block w-full px-4 py-2 mt-2 border rounded-md dark:bg-gray-900"
                     required
                   />
                 </div>
@@ -118,7 +145,7 @@ const POSLogin = () => {
                 <div className="mt-6">
                   <button
                     type="submit"
-                    className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-200 transform bg-blue-500 rounded-md hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full px-4 py-2 tracking-wide text-white bg-blue-500 rounded-md hover:bg-blue-400"
                   >
                     Iniciar Sesión
                   </button>

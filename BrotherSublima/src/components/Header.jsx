@@ -1,10 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginAlertModal from "./LoginAlertModal";
 
 const Header = ({ isLoggedIn }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [username, setUsername] = useState("");
+
+  // 🟣 Cargar nombre del usuario si está logueado
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("pos_user"));
+    if (user && user.username) {
+      setUsername(user.username.toUpperCase());
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -57,12 +66,20 @@ const Header = ({ isLoggedIn }) => {
             </>
           ) : (
             <>
-              {/* ✅ Botón nuevo: Mis Compras */}
+              {/* ✅ Mis compras */}
               <button
                 className="text-indigo-600 hover:underline"
                 onClick={() => navigate("/mis-compras")}
               >
                 Mis compras
+              </button>
+
+              {/* ✅ Botón con nombre del usuario */}
+              <button
+                className="text-indigo-600 font-semibold hover:underline"
+                onClick={() => navigate("/agregar-direccion")}
+              >
+                {username || "Perfil"}
               </button>
 
               <button
@@ -74,6 +91,7 @@ const Header = ({ isLoggedIn }) => {
             </>
           )}
 
+          {/* 🛒 Botón carrito */}
           <button
             className="text-indigo-600 text-xl"
             onClick={handleCartClick}

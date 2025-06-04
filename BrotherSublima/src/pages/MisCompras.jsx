@@ -57,7 +57,7 @@ const MisCompras = () => {
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-lg text-indigo-600">
-                      #{orden.id}
+                      {orden.numero_orden}
                     </span>
                     <span className="text-sm text-gray-500">
                       {new Date(orden.created_at).toLocaleString()}

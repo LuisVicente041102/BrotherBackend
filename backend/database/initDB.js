@@ -19,6 +19,13 @@ const createTables = async () => {
     await client.query("DROP TABLE IF EXISTS test_table;");
     console.log("🗑️ Tabla 'test_table' eliminada");
 
+    // 🔄 Eliminar pos_users primero
+    await client.query("DROP TABLE IF EXISTS pos_user_addresses CASCADE;");
+    await client.query("DROP TABLE IF EXISTS cart_items CASCADE;");
+    await client.query("DROP TABLE IF EXISTS orders CASCADE;");
+    await client.query("DROP TABLE IF EXISTS pos_users CASCADE;");
+    console.log("🗑️ Tabla 'pos_users' eliminada");
+
     // Usuarios del inventario
     await client.query(`
       CREATE TABLE IF NOT EXISTS inventory_users (
@@ -31,18 +38,22 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'inventory_users' creada correctamente");
 
-    // Usuarios del punto de venta
+    // Usuarios del punto de venta con verificación de correo
     await client.query(`
-      CREATE TABLE IF NOT EXISTS pos_users (
+      CREATE TABLE pos_users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(100) NOT NULL,
         email VARCHAR(150) UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role VARCHAR(20) DEFAULT 'cashier',
+        email_verificado BOOLEAN DEFAULT FALSE,
+        token_verificacion TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("✅ Tabla 'pos_users' creada correctamente");
+    console.log(
+      "✅ Tabla 'pos_users' creada correctamente con verificación de correo"
+    );
 
     // Categorías
     await client.query(`
@@ -85,7 +96,6 @@ const createTables = async () => {
     console.log("✅ Tabla 'cart_items' creada correctamente");
 
     // Pedidos (Orders)
-    await client.query(`DROP TABLE IF EXISTS orders;`);
     await client.query(`
       CREATE TABLE orders (
         id SERIAL PRIMARY KEY,
@@ -102,6 +112,29 @@ const createTables = async () => {
       );
     `);
     console.log("✅ Tabla 'orders' creada correctamente");
+
+    // Dirección del usuario del POS
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pos_user_addresses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES pos_users(id) ON DELETE CASCADE,
+        calle TEXT NOT NULL,
+        numero TEXT NOT NULL,
+        colonia TEXT NOT NULL,
+        ciudad TEXT NOT NULL,
+        estado TEXT NOT NULL,
+        codigo_postal TEXT NOT NULL,
+        telefono TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("✅ Tabla 'pos_user_addresses' creada correctamente");
+
+    // Eliminar usuario de prueba si existe
+    await client.query(`
+      DELETE FROM pos_users WHERE email = '20460394@colima.tecnm.mx';
+    `);
+    console.log("🧹 Usuario de prueba eliminado (si existía)");
 
     await client.end();
     console.log("🔌 Conexión cerrada correctamente");

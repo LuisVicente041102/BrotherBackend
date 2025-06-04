@@ -1,4 +1,15 @@
 @import "tailwindcss";
+@import "./assets/fonts/slick-fonts.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ✅ Importa fuentes slick manualmente desde /assets/fonts */
+@font-face {
+  font-family: "slick";
+  src: url("/src/assets/fonts/slick.woff") format("woff"),
+    url("/src/assets/fonts/slick.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}

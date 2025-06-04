@@ -1,18 +1,29 @@
+// 📄 backend/routes/stripeRoutes.js
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const pool = require("../db");
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// 🛒 Crear sesión de pago con datos forzados
+// ✅ Crear sesión de pago (ya no pide dirección)
 router.post("/create-session", async (req, res) => {
-  const { cartItems } = req.body;
-
   try {
+    const { cartItems, email } = req.body;
+
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "No se enviaron productos válidos" });
+    }
+
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ error: "Correo electrónico inválido" });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
+      customer_email: email,
       line_items: cartItems.map((item) => ({
         price_data: {
           currency: "mxn",
@@ -24,116 +35,74 @@ router.post("/create-session", async (req, res) => {
         },
         quantity: item.cantidad,
       })),
-      billing_address_collection: "required",
-      shipping_address_collection: {
-        allowed_countries: ["MX"],
-      },
-      customer_creation: "always",
       success_url:
         "http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "http://localhost:5173/cancel",
-      metadata: {
-        userId: cartItems[0].user_id.toString(),
-      },
+      cancel_url: "http://localhost:5173/cart",
     });
 
-    res.json({ sessionId: session.id });
-  } catch (error) {
-    console.error("❌ Error al crear sesión de pago:", error);
+    res.status(200).json({ sessionId: session.id });
+  } catch (err) {
+    console.error("❌ Error al crear sesión de pago:", err.message);
     res.status(500).json({ error: "Error al crear sesión de pago" });
   }
 });
 
-// 📊 Obtener ventas desde Stripe
-router.get("/sales", async (req, res) => {
-  try {
-    const sessions = await stripe.checkout.sessions.list({ limit: 20 });
-
-    const sales = await Promise.all(
-      sessions.data
-        .filter((session) => session.payment_status === "paid")
-        .map(async (session) => {
-          const lineItems = await stripe.checkout.sessions.listLineItems(
-            session.id,
-            { limit: 10 }
-          );
-
-          let customer = null;
-          if (session.customer) {
-            customer = await stripe.customers.retrieve(session.customer);
-          }
-
-          const rawAddress =
-            session.shipping?.address || session.customer_details?.address;
-
-          const address = rawAddress
-            ? `${rawAddress.line1}, ${rawAddress.postal_code}, ${rawAddress.city}, ${rawAddress.state}, ${rawAddress.country}`
-            : "Sin dirección";
-
-          return {
-            id: session.id,
-            amount: session.amount_total / 100,
-            currency: session.currency,
-            status: session.payment_status,
-            created: new Date(session.created * 1000).toLocaleString(),
-            email: customer?.email || "Sin email",
-            name: customer?.name || "Sin nombre",
-            address,
-            items: lineItems.data.map((item) => ({
-              name: item.description,
-              quantity: item.quantity,
-            })),
-          };
-        })
-    );
-
-    res.json(sales);
-  } catch (error) {
-    console.error("❌ Error al obtener ventas:", error);
-    res.status(500).json({ message: "Error al obtener ventas de Stripe" });
-  }
-});
-
-// 📝 Guardar orden manual (Success.jsx)
+// ✅ Guardar orden con dirección desde base de datos
 router.post("/save-order", async (req, res) => {
-  const { sessionId, userId, cartItems, direccion, correo } = req.body;
-
   try {
+    const { sessionId, userId, cartItems } = req.body;
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (!session || session.payment_status !== "paid") {
+      return res.status(400).json({ error: "Sesión no válida o no pagada" });
+    }
+
+    // 🧾 Obtener dirección del usuario desde la tabla correcta
+    const direccionResult = await pool.query(
+      "SELECT * FROM pos_user_addresses WHERE user_id = $1",
+      [userId]
+    );
+    const direccion = direccionResult.rows[0] || {};
+
+    const correo = session.customer_details?.email || "";
     const productos = cartItems.map((item) => ({
       nombre: item.nombre,
       cantidad: item.cantidad,
     }));
+    const total = session.amount_total / 100;
 
-    const total = cartItems.reduce(
-      (acc, item) => acc + item.precio_venta * item.cantidad,
-      0
-    );
-
-    const direccionFormateada = direccion || {};
-
-    await pool.query(
-      `
-      INSERT INTO orders (
-        user_id, stripe_session_id, productos, total, direccion_envio,
-        correo_cliente, status
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, 'pendiente')
-      ON CONFLICT (stripe_session_id) DO NOTHING
-    `,
+    const insertResult = await pool.query(
+      `INSERT INTO orders (user_id, stripe_session_id, productos, total, direccion_envio, correo_cliente, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pendiente')
+       ON CONFLICT DO NOTHING`,
       [
         userId,
         sessionId,
         JSON.stringify(productos),
         total,
-        JSON.stringify(direccionFormateada),
+        JSON.stringify(direccion),
         correo,
       ]
     );
 
-    res.json({ message: "✅ Orden guardada con éxito (o ya existía)" });
-  } catch (error) {
-    console.error("❌ Error al guardar orden manual:", error);
-    res.status(500).json({ error: "Error al guardar la orden" });
+    if (insertResult.rowCount === 0) {
+      return res.status(200).json({ message: "Orden ya registrada" });
+    }
+
+    // 📉 Actualizar stock
+    for (const item of cartItems) {
+      await pool.query(
+        `UPDATE products SET cantidad = GREATEST(cantidad - $1, 0) WHERE nombre = $2`,
+        [item.cantidad, item.nombre]
+      );
+    }
+
+    res
+      .status(200)
+      .json({ message: "Orden guardada con dirección del sistema" });
+  } catch (err) {
+    console.error("❌ Error al guardar orden:", err);
+    res.status(500).json({ error: "Error al guardar orden" });
   }
 });
 
