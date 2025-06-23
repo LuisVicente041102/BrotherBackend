@@ -1,0 +1,7 @@
+# ⚡ Node
+node_modules/
+.env
+dist/
+build/
+.cache/
+logs/

@@ -4,20 +4,15 @@ const router = express.Router();
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const pool = require("../db");
+const nodemailer = require("nodemailer");
 
-// ✅ Crear sesión de pago (ya no pide dirección)
+// ✅ Crear sesión de pago
 router.post("/create-session", async (req, res) => {
   try {
     const { cartItems, email } = req.body;
 
-    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "No se enviaron productos válidos" });
-    }
-
-    if (!email || typeof email !== "string") {
-      return res.status(400).json({ error: "Correo electrónico inválido" });
+    if (!cartItems?.length || !email) {
+      return res.status(400).json({ error: "Datos inválidos" });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -42,67 +37,129 @@ router.post("/create-session", async (req, res) => {
 
     res.status(200).json({ sessionId: session.id });
   } catch (err) {
-    console.error("❌ Error al crear sesión de pago:", err.message);
-    res.status(500).json({ error: "Error al crear sesión de pago" });
+    console.error("❌ Error al crear sesión:", err.message);
+    res.status(500).json({ error: "Error al crear sesión" });
   }
 });
 
-// ✅ Guardar orden con dirección desde base de datos
+// ✅ Guardar orden + enviar correos
 router.post("/save-order", async (req, res) => {
-  try {
-    const { sessionId, userId, cartItems } = req.body;
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+  const { sessionId, userId, cartItems } = req.body;
 
-    if (!session || session.payment_status !== "paid") {
-      return res.status(400).json({ error: "Sesión no válida o no pagada" });
+  try {
+    // Verifica si ya existe una orden con el mismo sessionId
+    const existing = await pool.query(
+      "SELECT * FROM orders WHERE stripe_session_id = $1",
+      [sessionId]
+    );
+    if (existing.rows.length > 0) {
+      return res
+        .status(200)
+        .json({ message: "Orden ya guardada anteriormente" });
     }
 
-    // 🧾 Obtener dirección del usuario desde la tabla correcta
-    const direccionResult = await pool.query(
+    const userRes = await pool.query("SELECT * FROM pos_users WHERE id = $1", [
+      userId,
+    ]);
+    const addressRes = await pool.query(
       "SELECT * FROM pos_user_addresses WHERE user_id = $1",
       [userId]
     );
-    const direccion = direccionResult.rows[0] || {};
+    const inventoryRes = await pool.query("SELECT email FROM inventory_users");
 
-    const correo = session.customer_details?.email || "";
-    const productos = cartItems.map((item) => ({
-      nombre: item.nombre,
-      cantidad: item.cantidad,
-    }));
-    const total = session.amount_total / 100;
+    if (!userRes.rows.length) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
 
-    const insertResult = await pool.query(
-      `INSERT INTO orders (user_id, stripe_session_id, productos, total, direccion_envio, correo_cliente, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pendiente')
-       ON CONFLICT DO NOTHING`,
+    const user = userRes.rows[0];
+    const address = addressRes.rows[0] || {};
+    const total = cartItems.reduce(
+      (acc, i) => acc + i.precio_venta * i.cantidad,
+      0
+    );
+
+    // Guardar orden
+    await pool.query(
+      `INSERT INTO orders (user_id, stripe_session_id, productos, total, direccion_envio, correo_cliente)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         userId,
         sessionId,
-        JSON.stringify(productos),
+        JSON.stringify(cartItems),
         total,
-        JSON.stringify(direccion),
-        correo,
+        JSON.stringify(address),
+        user.email,
       ]
     );
 
-    if (insertResult.rowCount === 0) {
-      return res.status(200).json({ message: "Orden ya registrada" });
-    }
-
-    // 📉 Actualizar stock
+    // Descontar del stock
     for (const item of cartItems) {
+      console.log(
+        "Descontando producto",
+        item.product_id,
+        "cantidad:",
+        item.cantidad
+      );
       await pool.query(
-        `UPDATE products SET cantidad = GREATEST(cantidad - $1, 0) WHERE nombre = $2`,
-        [item.cantidad, item.nombre]
+        "UPDATE products SET cantidad = cantidad - $1 WHERE id = $2",
+        [item.cantidad, item.product_id]
       );
     }
 
-    res
-      .status(200)
-      .json({ message: "Orden guardada con dirección del sistema" });
-  } catch (err) {
-    console.error("❌ Error al guardar orden:", err);
-    res.status(500).json({ error: "Error al guardar orden" });
+    // Configurar nodemailer
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const productosHTML = cartItems
+      .map((i) => `<li>${i.nombre} (x${i.cantidad}) - $${i.precio_venta}</li>`)
+      .join("");
+
+    const html = `
+      <h2>🛒 Nueva compra realizada</h2>
+      <p><strong>Cliente:</strong> ${user.username} (${user.email})</p>
+      <ul>${productosHTML}</ul>
+      <p><strong>Total:</strong> $${total.toFixed(2)}</p>
+      <p><strong>Dirección:</strong><br>
+      Calle: ${address.calle || "-"}<br>
+      Número: ${address.numero || "-"}<br>
+      Colonia: ${address.colonia || "-"}<br>
+      Ciudad: ${address.ciudad || "-"}<br>
+      Estado: ${address.estado || "-"}<br>
+      Código Postal: ${address.codigo_postal || "-"}<br>
+      Teléfono: ${address.telefono || "-"}</p>
+    `;
+
+    const inventarioEmails = inventoryRes.rows.map((row) => row.email);
+
+    // Enviar correo al inventario
+    await transporter.sendMail({
+      from: `"BrotherSublima" <${process.env.EMAIL_USER}>`,
+      to: inventarioEmails,
+      subject: "📦 Nueva compra realizada",
+      html,
+    });
+
+    // Enviar correo al cliente
+    await transporter.sendMail({
+      from: `"BrotherSublima" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "🧾 Confirmación de compra",
+      html: `
+        <p>¡Gracias por tu compra, ${user.username}!</p>
+        ${html}
+        <p>Te notificaremos cuando tu pedido sea enviado.</p>
+      `,
+    });
+
+    res.status(200).json({ message: "Orden guardada y correos enviados" });
+  } catch (error) {
+    console.error("❌ Error en /save-order:", error.message);
+    res.status(500).json({ message: "Error al guardar orden o enviar correo" });
   }
 });
 

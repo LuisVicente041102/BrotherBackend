@@ -251,5 +251,60 @@ router.post("/reset-password", async (req, res) => {
     res.status(500).json({ message: "Error al actualizar contraseña" });
   }
 });
+// 🟢 Enviar notificación de compra por correo
+// 📩 Enviar correo de confirmación de compra
+router.post("/send-purchase-email", async (req, res) => {
+  const { email, nombre, productos, total, direccion } = req.body;
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const productosHTML = productos
+      .map(
+        (item) =>
+          `<li>${item.nombre} (Cantidad: ${item.cantidad}) - $${item.precio_venta}</li>`
+      )
+      .join("");
+
+    const direccionHTML = `
+      <p><strong>Calle:</strong> ${direccion.calle}</p>
+      <p><strong>Número:</strong> ${direccion.numero}</p>
+      <p><strong>Colonia:</strong> ${direccion.colonia}</p>
+      <p><strong>Ciudad:</strong> ${direccion.ciudad}</p>
+      <p><strong>Estado:</strong> ${direccion.estado}</p>
+      <p><strong>Código Postal:</strong> ${direccion.codigo_postal}</p>
+      <p><strong>Teléfono:</strong> ${direccion.telefono}</p>
+    `;
+
+    const htmlContent = `
+      <h2>¡Gracias por tu compra, ${nombre}!</h2>
+      <p>Tu pedido fue procesado correctamente. Aquí están los detalles:</p>
+      <h3>Productos:</h3>
+      <ul>${productosHTML}</ul>
+      <p><strong>Total:</strong> $${total}</p>
+      <h3>Dirección de Envío:</h3>
+      ${direccionHTML}
+      <p>Te notificaremos cuando tu pedido sea enviado.</p>
+    `;
+
+    await transporter.sendMail({
+      from: `"Brother Sublima" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Confirmación de compra - Brother Sublima",
+      html: htmlContent,
+    });
+
+    res.json({ message: "Correo enviado correctamente" });
+  } catch (error) {
+    console.error("❌ Error al enviar correo:", error.message);
+    res.status(500).json({ message: "Error al enviar correo" });
+  }
+});
 
 module.exports = router;
