@@ -1,12 +1,16 @@
 require("dotenv").config();
 const { Client } = require("pg");
 
+// 🔐 Cliente con soporte SSL para Render
 const client = new Client({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false, // importante para Render
+  },
 });
 
 const createTables = async () => {
@@ -15,18 +19,15 @@ const createTables = async () => {
     await client.connect();
     console.log("✅ Conectado a la base de datos", process.env.DB_NAME);
 
-    // Limpieza de prueba
     await client.query("DROP TABLE IF EXISTS test_table;");
     console.log("🗑️ Tabla 'test_table' eliminada");
 
-    // 🔄 Eliminar pos_users primero
     await client.query("DROP TABLE IF EXISTS pos_user_addresses CASCADE;");
     await client.query("DROP TABLE IF EXISTS cart_items CASCADE;");
     await client.query("DROP TABLE IF EXISTS orders CASCADE;");
     await client.query("DROP TABLE IF EXISTS pos_users CASCADE;");
     console.log("🗑️ Tabla 'pos_users' eliminada");
 
-    // Usuarios del inventario
     await client.query(`
       CREATE TABLE IF NOT EXISTS inventory_users (
         id SERIAL PRIMARY KEY,
@@ -38,7 +39,6 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'inventory_users' creada correctamente");
 
-    // Usuarios del punto de venta con verificación de correo
     await client.query(`
       CREATE TABLE pos_users (
         id SERIAL PRIMARY KEY,
@@ -51,11 +51,8 @@ const createTables = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log(
-      "✅ Tabla 'pos_users' creada correctamente con verificación de correo"
-    );
+    console.log("✅ Tabla 'pos_users' creada correctamente");
 
-    // Categorías
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id SERIAL PRIMARY KEY,
@@ -66,7 +63,6 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'categories' creada correctamente");
 
-    // Productos
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
@@ -83,7 +79,6 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'products' creada correctamente");
 
-    // Carrito
     await client.query(`
       CREATE TABLE IF NOT EXISTS cart_items (
         id SERIAL PRIMARY KEY,
@@ -95,7 +90,6 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'cart_items' creada correctamente");
 
-    // Pedidos (Orders)
     await client.query(`
       CREATE TABLE orders (
         id SERIAL PRIMARY KEY,
@@ -113,7 +107,6 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'orders' creada correctamente");
 
-    // Dirección del usuario del POS
     await client.query(`
       CREATE TABLE IF NOT EXISTS pos_user_addresses (
         id SERIAL PRIMARY KEY,
@@ -130,7 +123,6 @@ const createTables = async () => {
     `);
     console.log("✅ Tabla 'pos_user_addresses' creada correctamente");
 
-    // Eliminar usuario de prueba si existe
     await client.query(`
       DELETE FROM pos_users WHERE email = '20460394@colima.tecnm.mx';
     `);

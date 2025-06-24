@@ -5,7 +5,6 @@ const router = express.Router();
 const path = require("path");
 const fs = require("fs");
 
-// Configuración de almacenamiento para las imágenes
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, "..", "uploads");
@@ -22,11 +21,30 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* -----------------------------------------
-   ✅ RUTAS DEL PRODUCTO
-------------------------------------------*/
+const getBaseUrl = (req) => {
+  return req.headers["x-forwarded-host"]
+    ? `https://${req.headers["x-forwarded-host"]}`
+    : `${req.protocol}://${req.get("host")}`;
+};
 
-// Obtener todos los productos (NO archivados)
+// 🔥 MOVER ESTA RUTA ARRIBA para evitar conflictos con "/:id"
+router.get("/top", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM products ORDER BY cantidad DESC LIMIT 6
+    `);
+    const baseUrl = getBaseUrl(req);
+    const products = result.rows.map((product) => ({
+      ...product,
+      imagen_url: product.imagen_url ? `${baseUrl}${product.imagen_url}` : null,
+    }));
+    res.json(products);
+  } catch (err) {
+    console.error("❌ Error al obtener productos más vendidos:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -36,14 +54,18 @@ router.get("/", async (req, res) => {
       WHERE p.archivado = false
       ORDER BY p.id ASC
     `);
-    res.json(result.rows);
+    const baseUrl = getBaseUrl(req);
+    const products = result.rows.map((product) => ({
+      ...product,
+      imagen_url: product.imagen_url ? `${baseUrl}${product.imagen_url}` : null,
+    }));
+    res.json(products);
   } catch (error) {
     console.error("❌ Error al obtener productos:", error);
     res.status(500).json({ message: "Error al obtener productos" });
   }
 });
 
-// Obtener productos archivados
 router.get("/archived", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -53,14 +75,18 @@ router.get("/archived", async (req, res) => {
       WHERE p.archivado = true
       ORDER BY p.id ASC
     `);
-    res.json(result.rows);
+    const baseUrl = getBaseUrl(req);
+    const products = result.rows.map((product) => ({
+      ...product,
+      imagen_url: product.imagen_url ? `${baseUrl}${product.imagen_url}` : null,
+    }));
+    res.json(products);
   } catch (error) {
     console.error("❌ Error al obtener productos archivados:", error);
     res.status(500).json({ message: "Error al obtener productos archivados" });
   }
 });
 
-// Agregar un producto
 router.post("/", upload.single("imagen"), async (req, res) => {
   const { nombre, cantidad, precio_compra, precio_venta, categoria_id } =
     req.body;
@@ -91,7 +117,6 @@ router.post("/", upload.single("imagen"), async (req, res) => {
   }
 });
 
-// Actualizar producto
 router.put("/:id", upload.single("imagen"), async (req, res) => {
   const { id } = req.params;
   const { nombre, cantidad, precio_compra, precio_venta, categoria_id } =
@@ -122,7 +147,6 @@ router.put("/:id", upload.single("imagen"), async (req, res) => {
   }
 });
 
-// Archivar producto
 router.put("/:id/archivar", async (req, res) => {
   const { id } = req.params;
   try {
@@ -137,7 +161,6 @@ router.put("/:id/archivar", async (req, res) => {
   }
 });
 
-// Desarchivar producto
 router.put("/:id/desarchivar", async (req, res) => {
   const { id } = req.params;
   try {
@@ -152,7 +175,6 @@ router.put("/:id/desarchivar", async (req, res) => {
   }
 });
 
-// Obtener productos públicos para el catálogo
 router.get("/public", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -161,37 +183,34 @@ router.get("/public", async (req, res) => {
       WHERE archivado = false
       ORDER BY created_at DESC
     `);
-    res.json(result.rows);
+    const baseUrl = getBaseUrl(req);
+    const products = result.rows.map((product) => ({
+      ...product,
+      imagen_url: product.imagen_url ? `${baseUrl}${product.imagen_url}` : null,
+    }));
+    res.json(products);
   } catch (error) {
     console.error("❌ Error al obtener productos públicos:", error);
     res.status(500).json({ message: "Error al obtener productos" });
   }
 });
 
-router.get("/top", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT * FROM products ORDER BY cantidad DESC LIMIT 6
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("❌ Error al obtener productos más vendidos:", err);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-// ✅ Obtener un producto individual por ID (para página de detalle)
+// 👇 ESTA DEBE IR AL FINAL
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(`SELECT * FROM products WHERE id = $1`, [
       id,
     ]);
-
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Producto no encontrado" });
     }
-
-    res.json(result.rows[0]);
+    const product = result.rows[0];
+    const baseUrl = getBaseUrl(req);
+    product.imagen_url = product.imagen_url
+      ? `${baseUrl}${product.imagen_url}`
+      : null;
+    res.json(product);
   } catch (error) {
     console.error("❌ Error al obtener producto por ID:", error);
     res.status(500).json({ message: "Error interno" });

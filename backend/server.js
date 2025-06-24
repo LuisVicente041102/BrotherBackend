@@ -17,14 +17,22 @@ const orderRoutes = require("./routes/orderRoutes"); // 🧾 Mis compras
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// ✅ CORS completamente abierto para desarrollo (Ngrok, Vercel, localhost)
+app.use(
+  cors({
+    origin: "*", // ⚠️ SOLO para desarrollo. En producción especifica dominios permitidos.
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Middleware para analizar JSON
 app.use(express.json());
 
-// Servir archivos estáticos (imágenes subidas)
+// Servir archivos estáticos (imágenes)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Ruta base de prueba
+// Ruta raíz para probar servidor
 app.get("/", (req, res) => {
   res.send("Servidor Express funcionando 🚀");
 });
@@ -37,8 +45,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/address", addressRoutes);
-app.use("/api/stripe", stripeRoutes); // ✅ Stripe: pagos y save-order
-app.use("/api/orders", orderRoutes); // 🧾 Vista de órdenes (mis compras)
+app.use("/api/stripe", stripeRoutes); // Stripe
+app.use("/api/orders", orderRoutes); // Órdenes
 
 // Verificación de conexión a la base de datos
 app.get("/test-db", async (req, res) => {
@@ -51,7 +59,7 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
+// Iniciar servidor (0.0.0.0 para compatibilidad con Ngrok y Render)
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
