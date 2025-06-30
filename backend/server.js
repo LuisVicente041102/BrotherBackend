@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const pool = require("./db");
+const bcrypt = require("bcrypt"); // 👉 Necesario para crear el admin
 
 const authRoutes = require("./routes/authRoutes"); // Inventario
 const posAuthRoutes = require("./routes/posAuthRoutes"); // Punto de venta
@@ -20,7 +21,7 @@ const PORT = process.env.PORT || 5000;
 // ✅ CORS completamente abierto para desarrollo (Ngrok, Vercel, localhost)
 app.use(
   cors({
-    origin: "*", // ⚠️ SOLO para desarrollo. En producción especifica dominios permitidos.
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -59,7 +60,36 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// Iniciar servidor (0.0.0.0 para compatibilidad con Ngrok y Render)
+// 👉 Crear usuario administrador automáticamente al iniciar
+const createAdminUser = async () => {
+  try {
+    const existingAdmin = await pool.query(
+      "SELECT * FROM inventory_users WHERE email = $1",
+      ["brothersublima375@gmail.com"]
+    );
+
+    if (existingAdmin.rowCount > 0) {
+      console.log("⚠️ Ya existe un usuario admin.");
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+
+    await pool.query(
+      "INSERT INTO inventory_users (email, password, role) VALUES ($1, $2, $3)",
+      ["brothersublima375@gmail.com", hashedPassword, "admin"]
+    );
+
+    console.log("🎉 Usuario administrador creado exitosamente.");
+  } catch (err) {
+    console.error("❌ Error creando admin:", err.message);
+  }
+};
+
+// Ejecutar al inicio
+createAdminUser();
+
+// Iniciar servidor
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
