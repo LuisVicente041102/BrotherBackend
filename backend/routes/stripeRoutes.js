@@ -1,10 +1,11 @@
-// 📄 backend/routes/stripeRoutes.js
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const pool = require("../db");
 const nodemailer = require("nodemailer");
+
+const BASE_URL = process.env.BASE_URL; // URL del frontend (Vercel)
 
 // ✅ Crear sesión de pago
 router.post("/create-session", async (req, res) => {
@@ -24,15 +25,14 @@ router.post("/create-session", async (req, res) => {
           currency: "mxn",
           product_data: {
             name: item.nombre,
-            images: [`http://localhost:5000${item.imagen_url}`],
+            images: [`${BASE_URL}/images${item.imagen_url}`], // ✅ Imagen pública
           },
           unit_amount: Math.round(item.precio_venta * 100),
         },
         quantity: item.cantidad,
       })),
-      success_url:
-        "http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "http://localhost:5173/cart",
+      success_url: `${BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${BASE_URL}/cart`,
     });
 
     res.status(200).json({ sessionId: session.id });
@@ -47,7 +47,6 @@ router.post("/save-order", async (req, res) => {
   const { sessionId, userId, cartItems } = req.body;
 
   try {
-    // Verifica si ya existe una orden con el mismo sessionId
     const existing = await pool.query(
       "SELECT * FROM orders WHERE stripe_session_id = $1",
       [sessionId]
@@ -78,7 +77,6 @@ router.post("/save-order", async (req, res) => {
       0
     );
 
-    // Guardar orden
     await pool.query(
       `INSERT INTO orders (user_id, stripe_session_id, productos, total, direccion_envio, correo_cliente)
        VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -92,21 +90,13 @@ router.post("/save-order", async (req, res) => {
       ]
     );
 
-    // Descontar del stock
     for (const item of cartItems) {
-      console.log(
-        "Descontando producto",
-        item.product_id,
-        "cantidad:",
-        item.cantidad
-      );
       await pool.query(
         "UPDATE products SET cantidad = cantidad - $1 WHERE id = $2",
         [item.cantidad, item.product_id]
       );
     }
 
-    // Configurar nodemailer
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -136,7 +126,6 @@ router.post("/save-order", async (req, res) => {
 
     const inventarioEmails = inventoryRes.rows.map((row) => row.email);
 
-    // Enviar correo al inventario
     await transporter.sendMail({
       from: `"BrotherSublima" <${process.env.EMAIL_USER}>`,
       to: inventarioEmails,
@@ -144,7 +133,6 @@ router.post("/save-order", async (req, res) => {
       html,
     });
 
-    // Enviar correo al cliente
     await transporter.sendMail({
       from: `"BrotherSublima" <${process.env.EMAIL_USER}>`,
       to: user.email,
