@@ -51,7 +51,7 @@ router.get("/latest", async (req, res) => {
        FROM products
        WHERE archivado = false -- Solo productos no archivados
        ORDER BY created_at DESC
-       LIMIT 3;`
+       LIMIT 5;`
     );
     const baseUrl = getBaseUrl(req);
     // Mapea los resultados para construir la URL completa de la imagen
