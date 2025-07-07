@@ -40,12 +40,10 @@ const getBaseUrl = (req) => {
 // --- RUTAS DE PRODUCTOS ---
 // NOTA IMPORTANTE: Las rutas más específicas deben ir ANTES que las rutas genéricas como "/:id".
 
-// 1. RUTA: Obtener los últimos 3 productos agregados (para el carrusel de "Novedades")
+// 1. RUTA: Obtener los últimos 5 productos agregados (para el carrusel de "Novedades")
 // Endpoint: GET /api/products/latest
 router.get("/latest", async (req, res) => {
   try {
-    // Consulta SQL para obtener los 3 productos más recientes, ordenados por 'created_at' descendente.
-    // 'created_at' está en tu esquema de tabla 'products', lo cual es perfecto.
     const result = await pool.query(
       `SELECT id, nombre, precio_venta, imagen_url
        FROM products
@@ -54,7 +52,6 @@ router.get("/latest", async (req, res) => {
        LIMIT 5;`
     );
     const baseUrl = getBaseUrl(req);
-    // Mapea los resultados para construir la URL completa de la imagen
     const products = result.rows.map((product) => ({
       ...product,
       imagen_url: product.imagen_url ? `${baseUrl}${product.imagen_url}` : null,
@@ -68,21 +65,17 @@ router.get("/latest", async (req, res) => {
 
 // 2. RUTA: Obtener el producto más vendido (para la sección destacada)
 // Endpoint: GET /api/products/top-selling
-// Esta implementación se adapta a tu esquema con 'productos' JSONB en la tabla 'orders'.
 router.get("/top-selling", async (req, res) => {
   try {
-    // 1. Obtener todos los pedidos para analizar sus productos JSONB
     const ordersResult = await pool.query(`SELECT productos FROM orders;`);
 
-    const productSales = {}; // Objeto para acumular las ventas por product_id
+    const productSales = {};
 
-    // 2. Iterar sobre cada pedido y sus productos (dentro del JSONB)
     ordersResult.rows.forEach((order) => {
-      // Asegúrate de que 'productos' sea un array y no sea nulo
       if (order.productos && Array.isArray(order.productos)) {
         order.productos.forEach((item) => {
-          const productId = item.product_id; // Asume que el JSONB tiene 'product_id'
-          const quantity = item.cantidad; // Asume que el JSONB tiene 'cantidad'
+          const productId = item.product_id;
+          const quantity = item.cantidad;
 
           if (productId && typeof quantity === "number") {
             productSales[productId] = (productSales[productId] || 0) + quantity;
@@ -94,7 +87,6 @@ router.get("/top-selling", async (req, res) => {
     let topProductId = null;
     let maxQuantitySold = 0;
 
-    // 3. Encontrar el product_id con la mayor cantidad vendida
     for (const productId in productSales) {
       if (productSales[productId] > maxQuantitySold) {
         maxQuantitySold = productSales[productId];
@@ -102,7 +94,6 @@ router.get("/top-selling", async (req, res) => {
       }
     }
 
-    // 4. Si se encontró un producto más vendido, obtener sus detalles de la tabla 'products'
     if (topProductId) {
       const productResult = await pool.query(
         `SELECT id, nombre, precio_venta, imagen_url
@@ -119,11 +110,9 @@ router.get("/top-selling", async (req, res) => {
           : null;
         res.json(topProduct);
       } else {
-        // El producto más vendido no se encontró o está archivado
         res.json(null);
       }
     } else {
-      // No hay ventas para determinar un producto más vendido
       res.json(null);
     }
   } catch (err) {
@@ -134,15 +123,13 @@ router.get("/top-selling", async (req, res) => {
 
 // 3. RUTA: Obtener productos "destacados" (tu ruta "/top" existente, renombrada a "/featured")
 // Endpoint: GET /api/products/featured
-// NOTA: Esta ruta ordena por 'cantidad' (que es la cantidad en stock en tu DB),
-// lo cual significa que devuelve productos con mayor stock.
 router.get("/featured", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, nombre, precio_venta, imagen_url
       FROM products
       WHERE archivado = false
-      ORDER BY cantidad DESC LIMIT 6 -- Tu lógica existente de ordenar por 'cantidad' (stock)
+      ORDER BY cantidad DESC LIMIT 6
     `);
     const baseUrl = getBaseUrl(req);
     const products = result.rows.map((product) => ({
@@ -202,12 +189,35 @@ router.get("/archived", async (req, res) => {
   }
 });
 
+// RUTA: Obtener productos públicos (no archivados, usados en el catálogo principal)
+// Endpoint: GET /api/products/public
+// ¡ESTA RUTA FALTABA Y HA SIDO REINSERTADA EN LA POSICIÓN CORRECTA!
+router.get("/public", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, nombre, precio_venta, imagen_url
+      FROM products
+      WHERE archivado = false
+      ORDER BY created_at DESC
+    `);
+    const baseUrl = getBaseUrl(req);
+    const products = result.rows.map((product) => ({
+      ...product,
+      imagen_url: product.imagen_url ? `${baseUrl}${product.imagen_url}` : null,
+    }));
+    res.json(products);
+  } catch (error) {
+    console.error("❌ Error al obtener productos públicos:", error);
+    res.status(500).json({ message: "Error al obtener productos" });
+  }
+});
+
 // RUTA: Crear un nuevo producto
 // Endpoint: POST /api/products/
 router.post("/", upload.single("imagen"), async (req, res) => {
   const { nombre, cantidad, precio_compra, precio_venta, categoria_id } =
     req.body;
-  const imagen_url = req.file ? `/uploads/${req.file.filename}` : null; // Ruta relativa
+  const imagen_url = req.file ? `/uploads/${req.file.filename}` : null;
 
   if (
     !nombre ||
@@ -223,7 +233,7 @@ router.post("/", upload.single("imagen"), async (req, res) => {
     const result = await pool.query(
       `INSERT INTO products 
        (nombre, cantidad, precio_compra, precio_venta, imagen_url, categoria_id, archivado, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, false, NOW()) -- Añade created_at con la fecha y hora actuales
+       VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
        RETURNING *`,
       [nombre, cantidad, precio_compra, precio_venta, imagen_url, categoria_id]
     );
@@ -240,7 +250,6 @@ router.put("/:id", upload.single("imagen"), async (req, res) => {
   const { id } = req.params;
   const { nombre, cantidad, precio_compra, precio_venta, categoria_id } =
     req.body;
-  // Si se sube un nuevo archivo, usa su URL; de lo contrario, usa la URL existente del cuerpo de la petición.
   const imagen_url = req.file
     ? `/uploads/${req.file.filename}`
     : req.body.imagen_url;
