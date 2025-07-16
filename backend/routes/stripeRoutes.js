@@ -25,7 +25,11 @@ router.post("/create-session", async (req, res) => {
           currency: "mxn",
           product_data: {
             name: item.nombre,
-            images: [`${BASE_URL}/images${item.imagen_url}`], // ✅ Imagen pública
+            // Asegúrate de que item.imagen_url sea una URL completa y válida para Stripe
+            // Stripe necesita URLs accesibles públicamente, no rutas relativas de tu backend.
+            // Si tus imágenes están en /uploads, considera subirlas a un CDN o S3 para Stripe.
+            // Por ahora, usaremos la URL que ya viene en item.imagen_url (que el frontend ya formatea)
+            images: [item.imagen_url],
           },
           unit_amount: Math.round(item.precio_venta * 100),
         },
@@ -42,31 +46,41 @@ router.post("/create-session", async (req, res) => {
   }
 });
 
-// ✅ Guardar orden + enviar correos
+// ✅ Guardar orden + enviar correos + VACIA EL CARRITO
 router.post("/save-order", async (req, res) => {
   const { sessionId, userId, cartItems } = req.body;
 
+  const client = await pool.connect(); // Usar un cliente para transacción
   try {
-    const existing = await pool.query(
+    await client.query("BEGIN"); // Iniciar transacción
+
+    // 1. Verificar si la orden ya existe para evitar duplicados
+    const existing = await client.query(
       "SELECT * FROM orders WHERE stripe_session_id = $1",
       [sessionId]
     );
     if (existing.rows.length > 0) {
+      await client.query("ROLLBACK"); // Revertir si ya existe
       return res
         .status(200)
         .json({ message: "Orden ya guardada anteriormente" });
     }
 
-    const userRes = await pool.query("SELECT * FROM pos_users WHERE id = $1", [
-      userId,
-    ]);
-    const addressRes = await pool.query(
+    // 2. Obtener datos de usuario y dirección
+    const userRes = await client.query(
+      "SELECT * FROM pos_users WHERE id = $1",
+      [userId]
+    );
+    const addressRes = await client.query(
       "SELECT * FROM pos_user_addresses WHERE user_id = $1",
       [userId]
     );
-    const inventoryRes = await pool.query("SELECT email FROM inventory_users");
+    const inventoryRes = await client.query(
+      "SELECT email FROM inventory_users"
+    );
 
     if (!userRes.rows.length) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
@@ -77,26 +91,31 @@ router.post("/save-order", async (req, res) => {
       0
     );
 
-    await pool.query(
+    // 3. Guardar la orden en la base de datos
+    await client.query(
       `INSERT INTO orders (user_id, stripe_session_id, productos, total, direccion_envio, correo_cliente)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         userId,
         sessionId,
-        JSON.stringify(cartItems),
+        JSON.stringify(cartItems), // Guarda el array de productos del carrito
         total,
         JSON.stringify(address),
         user.email,
       ]
     );
 
-    for (const item of cartItems) {
-      await pool.query(
-        "UPDATE products SET cantidad = cantidad - $1 WHERE id = $2",
-        [item.cantidad, item.product_id]
-      );
-    }
+    // NOTA: El stock ya se descontó en cartRoutes.js cuando el producto se añadió al carrito.
+    // Si tu lógica de stock fuera diferente (ej. descontar al guardar la orden),
+    // este sería el lugar para el bucle de "UPDATE products SET cantidad = cantidad - item.cantidad".
+    // Por ahora, asumimos que ya se descontó.
 
+    // 4. VACIA EL CARRITO del usuario después de guardar la orden
+    await client.query(`DELETE FROM cart_items WHERE user_id = $1;`, [userId]);
+
+    await client.query("COMMIT"); // Confirmar todos los cambios de la transacción
+
+    // 5. Enviar correos electrónicos (fuera de la transacción de DB para no bloquearla)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -146,8 +165,11 @@ router.post("/save-order", async (req, res) => {
 
     res.status(200).json({ message: "Orden guardada y correos enviados" });
   } catch (error) {
-    console.error("❌ Error en /save-order:", error.message);
+    await client.query("ROLLBACK"); // Revertir si ocurre cualquier error en la DB
+    console.error("❌ Error en /save-order (transacción):", error.message);
     res.status(500).json({ message: "Error al guardar orden o enviar correo" });
+  } finally {
+    client.release(); // Liberar el cliente de la pool
   }
 });
 
