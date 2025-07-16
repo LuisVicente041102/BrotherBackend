@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const InventoryHome = () => {
   const [user, setUser] = useState(null);
   const [employees, setEmployees] = useState([]);
@@ -21,7 +23,7 @@ const InventoryHome = () => {
 
   const fetchEmployees = async (token) => {
     try {
-      const response = await fetch("http://localhost:5000/api/employees", {
+      const response = await fetch(`${BACKEND_URL}/api/employees`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -43,13 +45,10 @@ const InventoryHome = () => {
   const handleDeleteEmployee = async (id) => {
     const token = localStorage.getItem("token");
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/employees/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/api/employees/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!response.ok) throw new Error("Error al eliminar empleado");
 

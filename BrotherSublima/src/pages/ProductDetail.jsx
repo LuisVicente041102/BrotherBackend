@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import CheckoutButton from "../components/CheckoutButton";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ const ProductDetail = () => {
 
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${id}`);
+        const res = await fetch(`${BACKEND_URL}/api/products/${id}`);
         const data = await res.json();
         setProduct(data);
       } catch (err) {
@@ -45,7 +47,13 @@ const ProductDetail = () => {
         <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
           <div className="md:w-1/2">
             <img
-              src={`http://localhost:5000${product.imagen_url}`}
+              // ** INICIO DEL CAMBIO **
+              src={
+                product.imagen_url?.startsWith("http")
+                  ? product.imagen_url
+                  : `${BACKEND_URL}${product.imagen_url}`
+              }
+              // ** FIN DEL CAMBIO **
               alt={product.nombre}
               className="w-full h-96 object-cover"
             />
@@ -81,18 +89,15 @@ const ProductDetail = () => {
                   }
 
                   try {
-                    const response = await fetch(
-                      "http://localhost:5000/api/cart",
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          user_id: user.id,
-                          product_id: product.id,
-                          cantidad: 1,
-                        }),
-                      }
-                    );
+                    const response = await fetch(`${BACKEND_URL}/api/cart`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        user_id: user.id,
+                        product_id: product.id,
+                        cantidad: 1,
+                      }),
+                    });
 
                     if (!response.ok) {
                       throw new Error("Error al agregar al carrito");
@@ -113,7 +118,10 @@ const ProductDetail = () => {
                 cartItems={[
                   {
                     nombre: product.nombre,
-                    imagen_url: product.imagen_url,
+                    // Asegúrate de que imagen_url sea la URL correcta aquí también
+                    imagen_url: product.imagen_url?.startsWith("http")
+                      ? product.imagen_url
+                      : `${BACKEND_URL}${product.imagen_url}`,
                     precio_venta: product.precio_venta,
                     cantidad: 1,
                   },

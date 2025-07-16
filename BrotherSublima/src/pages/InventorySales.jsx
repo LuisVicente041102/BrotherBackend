@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const InventorySales = () => {
   const [sales, setSales] = useState([]);
   const navigate = useNavigate();
@@ -9,9 +11,7 @@ const InventorySales = () => {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/payments/sales"
-        );
+        const response = await axios.get(`${BACKEND_URL}/api/payments/sales`);
         console.log("Ventas recibidas:", response.data);
         setSales(response.data);
       } catch (error) {
@@ -51,7 +51,7 @@ const InventorySales = () => {
                     <td className="px-4 py-2 border">{sale.id}</td>
                     <td className="px-4 py-2 border">${sale.amount}</td>
                     <td className="px-4 py-2 border">
-                      {sale.currency.toUpperCase()}
+                      {sale.currency?.toUpperCase()}
                     </td>
                     <td className="px-4 py-2 border">{sale.status}</td>
                     <td className="px-4 py-2 border">{sale.created}</td>
@@ -59,7 +59,7 @@ const InventorySales = () => {
                     <td className="px-4 py-2 border">{sale.email}</td>
                     <td className="px-4 py-2 border">{sale.address}</td>
                     <td className="px-4 py-2 border">
-                      {sale.items.map((item, idx) => (
+                      {sale.items?.map((item, idx) => (
                         <div key={idx}>
                           {item.name} × {item.quantity}
                         </div>

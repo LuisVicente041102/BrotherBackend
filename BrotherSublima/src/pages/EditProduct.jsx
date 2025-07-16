@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const EditProduct = () => {
   const { id } = useParams();
   const [nombre, setNombre] = useState("");
@@ -19,7 +21,7 @@ const EditProduct = () => {
 
     const fetchProducto = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+        const res = await fetch(`${BACKEND_URL}/api/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -28,7 +30,7 @@ const EditProduct = () => {
         setCantidad(data.cantidad);
         setPrecioCompra(data.precio_compra);
         setPrecioVenta(data.precio_venta);
-        setImagenPreview(data.imagen_url || "");
+        setImagenPreview(`${BACKEND_URL}${data.imagen_url || ""}`);
         setCategoriaId(data.categoria_id);
       } catch (err) {
         console.error("Error al cargar el producto:", err.message);
@@ -37,7 +39,7 @@ const EditProduct = () => {
 
     const fetchCategorias = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/categories", {
+        const res = await fetch(`${BACKEND_URL}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -71,7 +73,7 @@ const EditProduct = () => {
         formData.append("imagen_url", imagenPreview); // Enviar URL previa si no se cambia la imagen
       }
 
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -134,7 +136,6 @@ const EditProduct = () => {
             required
           />
 
-          {/* Vista previa de imagen */}
           {imagenPreview && (
             <div className="flex justify-center">
               <img

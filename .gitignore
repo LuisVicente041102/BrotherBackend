@@ -7,24 +7,22 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# ⚡ Node.js
+# ⚡ Node.js (global)
 node_modules/
 dist/
 dist-ssr/
 *.local
 
 # ⚡ Vite / React
-BrotherSublima/node_modules/
-BrotherSublima/.env
-BrotherSublima/dist/
-BrotherSublima/build/
+.env
+build/
 
 # ⚡ Express / Backend
 backend/node_modules/
 backend/.env
-backend/.cache/
 backend/dist/
 backend/build/
+backend/.cache/
 backend/logs/
 
 # 🛠️ Configuración del editor

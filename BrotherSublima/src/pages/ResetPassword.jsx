@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ const ResetPassword = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/api/pos/reset-password", {
+      const res = await fetch(`${BACKEND_URL}/api/pos/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, token, newPassword }),

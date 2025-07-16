@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/orders/all");
+        const res = await axios.get(`${BACKEND_URL}/api/orders/all`);
         setOrders(res.data);
       } catch (error) {
         console.error("❌ Error al obtener órdenes:", error);
@@ -20,7 +22,7 @@ const OrderManagement = () => {
   const handleUpdate = async (orderId, index) => {
     const updatedOrder = orders[index];
     try {
-      await axios.put(`http://localhost:5000/api/orders/update/${orderId}`, {
+      await axios.put(`${BACKEND_URL}/api/orders/update/${orderId}`, {
         tracking_number: updatedOrder.tracking_number,
         shipping_company: updatedOrder.shipping_company,
         status: updatedOrder.status,

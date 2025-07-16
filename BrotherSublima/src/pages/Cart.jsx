@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import CheckoutButton from "../components/CheckoutButton";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const Cart = () => {
   const [cart, setCart] = useState([]);
   const [address, setAddress] = useState(null);
@@ -25,7 +27,7 @@ const Cart = () => {
 
   const fetchCart = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/cart/${userId}`);
+      const res = await fetch(`${BACKEND_URL}/api/cart/${userId}`);
       const data = await res.json();
       setCart(data);
     } catch (err) {
@@ -35,7 +37,7 @@ const Cart = () => {
 
   const fetchAddress = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/address/${userId}`);
+      const res = await fetch(`${BACKEND_URL}/api/address/${userId}`);
       const data = await res.json();
       setAddress(data);
     } catch (err) {
@@ -46,7 +48,7 @@ const Cart = () => {
   const removeFromCart = async (productId) => {
     const user = JSON.parse(localStorage.getItem("pos_user"));
     try {
-      await fetch(`http://localhost:5000/api/cart/${user.id}/${productId}`, {
+      await fetch(`${BACKEND_URL}/api/cart/${user.id}/${productId}`, {
         method: "DELETE",
       });
       setCart((prev) => prev.filter((item) => item.product_id !== productId));
@@ -82,7 +84,7 @@ const Cart = () => {
                 >
                   <div className="flex items-center gap-4">
                     <img
-                      src={`http://localhost:5000${item.imagen_url}`}
+                      src={`${BACKEND_URL}${item.imagen_url}`}
                       alt={item.nombre}
                       className="w-24 h-24 object-cover rounded"
                     />

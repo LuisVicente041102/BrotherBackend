@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const ArchivedCategories = () => {
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
@@ -12,14 +14,11 @@ const ArchivedCategories = () => {
   const fetchArchivedCategories = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        "http://localhost:5000/api/categories/archivadas",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/api/categories/archivadas`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setCategories(data);
     } catch (err) {
@@ -34,7 +33,7 @@ const ArchivedCategories = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/categories/${id}/desarchivar`,
+        `${BACKEND_URL}/api/categories/${id}/desarchivar`,
         {
           method: "PUT",
           headers: {
@@ -45,7 +44,6 @@ const ArchivedCategories = () => {
 
       if (!response.ok) throw new Error("Error al desarchivar categoría");
 
-      // Actualizar lista quitando la categoría desarchivada
       setCategories((prev) => prev.filter((cat) => cat.id !== id));
     } catch (err) {
       console.error("❌ Error al desarchivar categoría:", err.message);

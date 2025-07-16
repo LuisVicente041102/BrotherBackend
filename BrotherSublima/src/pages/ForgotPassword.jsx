@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -9,14 +11,11 @@ const ForgotPassword = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/pos/reset-password-request",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const res = await fetch(`${BACKEND_URL}/api/pos/reset-password-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
       const data = await res.json();
 

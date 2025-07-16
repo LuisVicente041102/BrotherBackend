@@ -19,6 +19,8 @@ ChartJS.register(
   Legend
 );
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const InventoryReports = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -29,13 +31,13 @@ const InventoryReports = () => {
       const token = localStorage.getItem("token");
       try {
         const [resProducts, resCategories, resOrders] = await Promise.all([
-          fetch("http://localhost:5000/api/products", {
+          fetch(`${BACKEND_URL}/api/products`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:5000/api/categories", {
+          fetch(`${BACKEND_URL}/api/categories`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:5000/api/orders/all", {
+          fetch(`${BACKEND_URL}/api/orders/all`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -52,12 +54,10 @@ const InventoryReports = () => {
     fetchData();
   }, []);
 
-  // KPIs de inventario
   const totalProductos = products.length;
   const stockTotal = products.reduce((acc, p) => acc + p.cantidad, 0);
   const bajoStock = products.filter((p) => p.cantidad <= 10).length;
 
-  // Stock por producto
   const barData = {
     labels: products.map((p) => p.nombre),
     datasets: [
@@ -69,7 +69,6 @@ const InventoryReports = () => {
     ],
   };
 
-  // Categoría por pastel
   const categoryData = categories.map((cat) => {
     const productosEnCategoria = products.filter(
       (p) => p.categoria_id === cat.id
@@ -97,7 +96,6 @@ const InventoryReports = () => {
     ],
   };
 
-  // Ventas y órdenes
   const ventasPorDia = {};
   const ventasPorCliente = {};
   const ordenesPorCliente = {};
@@ -203,7 +201,6 @@ const InventoryReports = () => {
         Reportes de Inventario y Ventas
       </h1>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-white p-6 rounded shadow text-center">
           <h3 className="text-lg font-semibold">Total de Productos</h3>
@@ -219,7 +216,6 @@ const InventoryReports = () => {
         </div>
       </div>
 
-      {/* Producto más y menos vendido */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         <div className="bg-white p-6 rounded shadow text-center">
           <h3 className="text-sm font-semibold">Producto Más Vendido</h3>
@@ -235,7 +231,6 @@ const InventoryReports = () => {
         </div>
       </div>
 
-      {/* Gráficos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
         <div className="bg-white p-4 rounded shadow">
           <h2 className="text-xl font-bold mb-4 text-gray-700">
@@ -272,7 +267,6 @@ const InventoryReports = () => {
         </div>
       </div>
 
-      {/* Tablas */}
       {renderTabla("Productos con Bajo Stock (0 - 10)", productosBajoStock)}
       {renderTabla("Productos con Stock Medio (11 - 30)", productosStockMedio)}
       {renderTabla("Productos con Stock Alto (más de 30)", productosStockAlto)}

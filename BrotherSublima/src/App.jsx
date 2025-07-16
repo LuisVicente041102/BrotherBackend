@@ -1,7 +1,7 @@
 // ✅ App.jsx actualizado con rutas de recuperación de contraseña y verificación
 import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import Home from "./pages/Home";
+import Home from "./pages/home";
 import InventoryLogin from "./pages/InventoryLogin";
 import InventoryHome from "./pages/InventoryHome";
 import AddEmployee from "./pages/AddEmployee";
@@ -84,6 +84,7 @@ function App() {
 
       <Routes>
         {/* Públicas */}
+        <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/catalogo" element={<Catalog />} />
         <Route path="/producto/:id" element={<ProductDetail />} />

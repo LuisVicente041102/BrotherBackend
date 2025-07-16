@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const AddCategory = () => {
   const [nombre, setNombre] = useState("");
   const [error, setError] = useState(null);
@@ -19,7 +21,7 @@ const AddCategory = () => {
     console.log("📝 Enviando nombre:", nombre);
 
     try {
-      const response = await fetch("http://localhost:5000/api/categories", {
+      const response = await fetch(`${BACKEND_URL}/api/categories`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

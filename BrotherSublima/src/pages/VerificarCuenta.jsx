@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const VerificarCuenta = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("verificando");
@@ -14,7 +16,7 @@ const VerificarCuenta = () => {
     const verificar = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/pos/verify?token=${token}&id=${id}`
+          `${BACKEND_URL}/api/pos/verify?token=${token}&id=${id}`
         );
         const texto = await res.text();
 

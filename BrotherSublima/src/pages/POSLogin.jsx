@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const POSLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,7 +14,7 @@ const POSLogin = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/pos/login", {
+      const response = await fetch(`${BACKEND_URL}/api/pos/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -40,14 +42,11 @@ const POSLogin = () => {
 
   const handleResend = async () => {
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/pos/resend-verification",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const res = await fetch(`${BACKEND_URL}/api/pos/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       alert("Correo de verificación reenviado.");
@@ -106,7 +105,6 @@ const POSLogin = () => {
               )}
 
               <form onSubmit={handleSubmit}>
-                {/* Email */}
                 <div className="mt-4">
                   <label
                     htmlFor="email"
@@ -124,7 +122,6 @@ const POSLogin = () => {
                   />
                 </div>
 
-                {/* Password */}
                 <div className="mt-4">
                   <label
                     htmlFor="password"

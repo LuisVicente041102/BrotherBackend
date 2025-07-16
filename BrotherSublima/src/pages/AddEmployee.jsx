@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const AddEmployee = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +15,7 @@ const AddEmployee = () => {
 
     try {
       const token = localStorage.getItem("token"); // ✅ Obtener el token del admin
-      const response = await fetch("http://localhost:5000/api/employees/add", {
+      const response = await fetch(`${BACKEND_URL}/api/employees/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

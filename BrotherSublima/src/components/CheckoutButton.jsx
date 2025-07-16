@@ -6,6 +6,8 @@ const stripePromise = loadStripe(
   "pk_test_51RRRK8QPS7CfkaTCQeKZG7VWezS3UhiNJ4pDWhd5Zw5JrzSeFgl4hrJ1zepJrVNjuhBjmuKB4ylLe8u0Tktnq1Re00oYGSZIy4"
 );
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // ✅ Usar variable de entorno
+
 const CheckoutButton = ({ cartItems }) => {
   const handleCheckout = async () => {
     const user = JSON.parse(localStorage.getItem("pos_user"));
@@ -17,7 +19,6 @@ const CheckoutButton = ({ cartItems }) => {
 
     const email = user.email || "demo@email.com";
 
-    // 🔐 Guardamos en localStorage para recuperarlo luego en /success
     localStorage.setItem("cartItems", JSON.stringify(cartItems));
     localStorage.setItem("pos_user", JSON.stringify(user));
     localStorage.setItem("email", email);
@@ -28,16 +29,13 @@ const CheckoutButton = ({ cartItems }) => {
     }));
 
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/stripe/create-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ cartItems: itemsConUserId, email }),
-        }
-      );
+      const res = await fetch(`${BACKEND_URL}/api/stripe/create-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cartItems: itemsConUserId, email }),
+      });
 
       const data = await res.json();
       const stripe = await stripePromise;

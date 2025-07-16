@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const ArchivedProducts = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -10,21 +12,15 @@ const ArchivedProducts = () => {
     const fetchData = async () => {
       const token = localStorage.getItem("token");
 
-      const resProducts = await fetch(
-        "http://localhost:5000/api/products/archived",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const resProducts = await fetch(`${BACKEND_URL}/api/products/archived`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const archived = await resProducts.json();
       setProducts(archived);
 
-      const resCategories = await fetch(
-        "http://localhost:5000/api/categories",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const resCategories = await fetch(`${BACKEND_URL}/api/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const dataCategories = await resCategories.json();
       setCategories(dataCategories);
     };
@@ -40,7 +36,7 @@ const ArchivedProducts = () => {
 
     const token = localStorage.getItem("token");
     try {
-      await fetch(`http://localhost:5000/api/products/${id}/desarchivar`, {
+      await fetch(`${BACKEND_URL}/api/products/${id}/desarchivar`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -76,7 +72,7 @@ const ArchivedProducts = () => {
                   <td className="p-2">
                     {p.imagen_url ? (
                       <img
-                        src={`http://localhost:5000${p.imagen_url}`}
+                        src={`${BACKEND_URL}${p.imagen_url}`}
                         alt={p.nombre}
                         className="w-16 h-16 object-cover rounded"
                       />

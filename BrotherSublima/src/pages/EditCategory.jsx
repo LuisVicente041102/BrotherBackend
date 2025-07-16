@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const EditCategory = () => {
-  const { id } = useParams(); // ID desde la URL
+  const { id } = useParams();
   const [nombre, setNombre] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ const EditCategory = () => {
     const fetchCategory = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/categories`, {
+        const res = await fetch(`${BACKEND_URL}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -38,17 +40,14 @@ const EditCategory = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/categories/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ nombre }),
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/api/categories/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ nombre }),
+      });
 
       const data = await response.json();
 

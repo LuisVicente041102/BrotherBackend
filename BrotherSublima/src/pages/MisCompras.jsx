@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const MisCompras = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [ordenes, setOrdenes] = useState([]);
@@ -22,7 +24,7 @@ const MisCompras = () => {
     const fetchOrdenes = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/orders/user/${parsedUser.id}`
+          `${BACKEND_URL}/api/orders/user/${parsedUser.id}`
         );
         const data = await res.json();
         setOrdenes(data);

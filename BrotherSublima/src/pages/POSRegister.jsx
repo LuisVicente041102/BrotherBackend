@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const POSRegister = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -12,7 +14,7 @@ const POSRegister = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/pos/register", {
+      const response = await fetch(`${BACKEND_URL}/api/pos/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),

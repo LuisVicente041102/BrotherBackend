@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const ViewProducts = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -15,19 +17,16 @@ const ViewProducts = () => {
     const fetchData = async () => {
       const token = localStorage.getItem("token");
 
-      const resProducts = await fetch("http://localhost:5000/api/products", {
+      const resProducts = await fetch(`${BACKEND_URL}/api/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const dataProducts = await resProducts.json();
       setProducts(dataProducts);
       setFilteredProducts(dataProducts);
 
-      const resCategories = await fetch(
-        "http://localhost:5000/api/categories",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const resCategories = await fetch(`${BACKEND_URL}/api/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const dataCategories = await resCategories.json();
       setCategories(dataCategories);
     };
@@ -72,7 +71,7 @@ const ViewProducts = () => {
 
     const token = localStorage.getItem("token");
     try {
-      await fetch(`http://localhost:5000/api/products/${id}/archivar`, {
+      await fetch(`${BACKEND_URL}/api/products/${id}/archivar`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -143,7 +142,7 @@ const ViewProducts = () => {
                   <td className="p-2">
                     {p.imagen_url ? (
                       <img
-                        src={`http://localhost:5000${p.imagen_url}`}
+                        src={`${BACKEND_URL}${p.imagen_url}`}
                         alt={p.nombre}
                         className="w-16 h-16 object-cover rounded"
                       />

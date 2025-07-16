@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const AddAddress = () => {
   const [form, setForm] = useState({
     calle: "",
@@ -43,7 +45,7 @@ const AddAddress = () => {
 
     const fetchAddress = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/address/${user.id}`);
+        const res = await fetch(`${BACKEND_URL}/api/address/${user.id}`);
         if (res.ok) {
           const data = await res.json();
           if (data) {
@@ -71,7 +73,7 @@ const AddAddress = () => {
     const user = JSON.parse(localStorage.getItem("pos_user"));
 
     try {
-      const res = await fetch("http://localhost:5000/api/address", {
+      const res = await fetch(`${BACKEND_URL}/api/address`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,16 +95,13 @@ const AddAddress = () => {
   const handleUserUpdate = async () => {
     const user = JSON.parse(localStorage.getItem("pos_user"));
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/pos/update/${user.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(userData),
-        }
-      );
+      const res = await fetch(`${BACKEND_URL}/api/pos/update/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
 
       if (res.ok) {
         const data = await res.json();

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const AddProduct = () => {
   const [nombre, setNombre] = useState("");
   const [cantidad, setCantidad] = useState("");
@@ -17,7 +19,7 @@ const AddProduct = () => {
     const fetchCategorias = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch("http://localhost:5000/api/categories", {
+        const res = await fetch(`${BACKEND_URL}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -44,7 +46,7 @@ const AddProduct = () => {
       formData.append("categoria_id", categoriaId);
       if (imagen) formData.append("imagen", imagen);
 
-      const response = await fetch("http://localhost:5000/api/products", {
+      const response = await fetch(`${BACKEND_URL}/api/products`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
