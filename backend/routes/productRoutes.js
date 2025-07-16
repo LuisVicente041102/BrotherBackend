@@ -191,15 +191,29 @@ router.get("/archived", async (req, res) => {
 
 // RUTA: Obtener productos públicos (no archivados, usados en el catálogo principal)
 // Endpoint: GET /api/products/public
-// ¡ESTA RUTA FALTABA Y HA SIDO REINSERTADA EN LA POSICIÓN CORRECTA!
+// ¡ESTA RUTA HA SIDO ACTUALIZADA PARA FILTRAR POR CATEGORÍA!
 router.get("/public", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id, nombre, precio_venta, imagen_url
+    // Obtiene el parámetro de consulta 'categoria_id' de la URL
+    // Viene como string (ej. "?categoria_id=1"), por eso usamos parseInt()
+    const { categoria_id } = req.query;
+
+    let queryText = `
+      SELECT id, nombre, precio_venta, imagen_url, categoria_id -- Seleccionamos categoria_id para depuración
       FROM products
       WHERE archivado = false
-      ORDER BY created_at DESC
-    `);
+    `;
+    const queryParams = [];
+
+    // Si se proporciona un categoria_id en la URL, añadimos la condición de filtro
+    if (categoria_id) {
+      queryText += ` AND categoria_id = $1`; // Añade la condición WHERE a la consulta SQL
+      queryParams.push(parseInt(categoria_id)); // Convierte el ID de string a número entero
+    }
+
+    queryText += ` ORDER BY created_at DESC`; // Ordena los resultados por fecha de creación
+
+    const result = await pool.query(queryText, queryParams);
     const baseUrl = getBaseUrl(req);
     const products = result.rows.map((product) => ({
       ...product,
